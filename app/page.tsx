@@ -246,7 +246,7 @@ export default function Page() {
             <p className="eyebrow beat">Quem está por trás da Girofy</p>
             <div className="founder-grid">
               <figure className="founder-photo beat">
-                <img src="/girofy/founder.jpg" alt="Fundador da Girofy em seu estúdio" loading="lazy" />
+                <img src={`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/girofy/founder.jpg`} alt="Fundador da Girofy em seu estúdio" loading="lazy" />
                 <figcaption>Fundador · Girofy</figcaption>
               </figure>
               <blockquote className="founder-words">
