@@ -56,6 +56,18 @@ export class GiroEngine {
   /** 0..1 — how hard the user is scrolling right now (Lenis velocity). The machine feels the hand. */
   boost = 0
 
+  // Continuous-body physics: the anchor glides between scene stages and every
+  // segment chases its slot at its own pace — scene changes read as a silver
+  // serpent traveling, never a teleport.
+  private cxS = -1
+  private cyS = 0
+  private RS = 0
+  /** Follow-the-leader: the anchor's recent path, sampled every frame. Each
+   *  segment reads the anchor from `delay_i` seconds ago, so scene travel
+   *  strings the body along the head's path — a true serpent — and it
+   *  reassembles within the max delay after the head arrives. */
+  private hist: { x: number; y: number; r: number; t: number }[] = []
+
   constructor(private canvas: HTMLCanvasElement) {
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('no 2d context')
@@ -97,7 +109,7 @@ export class GiroEngine {
       case 'cases':
       case 'method':
       case 'founder':
-        return [this.w * 0.92, this.h * 0.12, base * 0.20]
+        return [this.w * 0.86, this.h * 0.16, base * 0.14]
       case 'flow':
         return [this.w * 0.5, this.h * 0.5, base * 0.26]
       case 'logo':
@@ -187,7 +199,25 @@ export class GiroEngine {
     ctx.clearRect(0, 0, this.w, this.h)
 
     const dark = this.scene !== 'build' && this.scene !== 'cases'
-    const [cx, cy, R] = this.center()
+
+    // The anchor glides toward the scene's stage — never jumps
+    const [txC, tyC, tR] = this.center()
+    if (this.cxS < 0) {
+      this.cxS = txC
+      this.cyS = tyC
+      this.RS = tR
+    }
+    const kC = this.reduced ? 1 : 1 - Math.exp(-dt * 4)
+    this.cxS += (txC - this.cxS) * kC
+    this.cyS += (tyC - this.cyS) * kC
+    this.RS += (tR - this.RS) * kC
+    const cx = this.cxS
+    const cy = this.cyS
+    const R = this.RS
+
+    // Record the head's path for the body to follow
+    this.hist.push({ x: cx, y: cy, r: R, t: now })
+    while (this.hist.length > 2 && now - this.hist[0].t > 700) this.hist.shift()
 
     // Spin
     this.rpm += (this.targetRpm() - this.rpm) * Math.min(1, dt * 2.2)
@@ -276,12 +306,25 @@ export class GiroEngine {
     // ---- The turbine segments ----
     const segLen = Math.max(R * 0.42, 26)
     const segW = Math.max(R * 0.085, 5)
+    const cosRot = Math.cos(this.rot)
+    const sinRot = Math.sin(this.rot)
     for (let i = 0; i < SEGMENTS; i++) {
-      const baseA = (i / SEGMENTS) * TAU + this.rot
-      const ringR = R * (1 + explode * (0.5 + prand(i + 20) * 1.3))
-      const rx = cx + Math.cos(baseA) * ringR
-      const ry = cy + Math.sin(baseA) * ringR
-      const rAngle = baseA + TAU / 4
+      // Each segment follows the head's path with its own delay (0..480ms)
+      const delay = this.reduced ? 0 : (((i * 5) % SEGMENTS) / SEGMENTS) * 480
+      let a = this.hist[this.hist.length - 1]
+      for (let h = this.hist.length - 1; h >= 0; h--) {
+        a = this.hist[h]
+        if (now - a.t >= delay) break
+      }
+
+      const a0 = (i / SEGMENTS) * TAU
+      const ringR = a.r * (1 + explode * (0.5 + prand(i + 20) * 1.3))
+      // Slot around the delayed anchor, rotation applied crisply on top
+      const ox = Math.cos(a0) * ringR
+      const oy = Math.sin(a0) * ringR
+      const rx = a.x + ox * cosRot - oy * sinRot
+      const ry = a.y + ox * sinRot + oy * cosRot
+      const rAngle = a0 + this.rot + TAU / 4
 
       let x = rx, y = ry, ang = rAngle
       if (this.morph > 0.001) {
@@ -313,18 +356,6 @@ export class GiroEngine {
       ctx.strokeStyle = g
       ctx.lineWidth = segW
       ctx.lineCap = 'round'
-
-      // motion trail
-      if (!this.reduced && this.rpm > 0.5 && this.morph < 0.5) {
-        const trail = Math.min(0.35, (this.rpm - 0.5) * 0.2)
-        ctx.globalAlpha = trail
-        const ta2 = ang - this.rpm * 0.05
-        ctx.beginPath()
-        ctx.moveTo(x - Math.cos(ta2) * segLen * 0.5, y - Math.sin(ta2) * segLen * 0.5)
-        ctx.lineTo(x + Math.cos(ta2) * segLen * 0.5, y + Math.sin(ta2) * segLen * 0.5)
-        ctx.stroke()
-        ctx.globalAlpha = 1
-      }
 
       ctx.beginPath()
       ctx.moveTo(x - hx, y - hy)

@@ -101,11 +101,6 @@ export default function Page() {
               <span className="auto a2 hero-line2">Mas quanto ele perde <em>a cada volta?</em></span>
             </h1>
             <div className="hero-foot auto a3">
-              <div className="loss-box">
-                <span className="loss-label">Conta rápida: 1h por dia presa em tarefa manual, a R$ 45/hora —</span>
-                <span className="loss-value"><Odometer value={16425} prefix="R$ " duration={2200} /></span>
-                <span className="loss-label">por ano, vazando de um único processo.</span>
-              </div>
               <div className="hero-actions">
                 <a href={whatsappUrl} target="_blank" rel="noreferrer" className="cta" aria-label="Encontrar meu vazamento pelo WhatsApp">
                   Encontrar meu vazamento <ArrowUpRight aria-hidden="true" />
@@ -131,7 +126,11 @@ export default function Page() {
                 </li>
               ))}
             </ul>
-            <p className="diag-note beat">Cada falha é silenciosa. Juntas, são o motivo do faturamento não girar.</p>
+            <div className="loss-box beat">
+              <span className="loss-label">1h por dia disso, a R$ 45/hora =</span>
+              <span className="loss-value"><Odometer value={16425} prefix="R$ " duration={2200} /></span>
+              <span className="loss-label">vazando por ano — de um único processo.</span>
+            </div>
           </div>
         </div>
       </section>
@@ -174,7 +173,6 @@ export default function Page() {
             <div className="cases-heading">
               <p className="eyebrow">Engenharia aplicada</p>
               <h2 id="cases-title">Problemas que<br />sabemos resolver.</h2>
-              <p className="cases-note">Cenários demonstrativos: a falha, a peça construída e o retorno projetado.</p>
               <div className="case-dots" role="tablist" aria-label="Navegar entre cenários">
                 {scenarios.map((s, i) => (
                   <button key={s.sector} type="button" data-case-dot={i} aria-label={`Cenário ${i + 1}: ${s.sector}`}>
@@ -252,7 +250,7 @@ export default function Page() {
               <blockquote className="founder-words">
                 <p className="founder-line beat" id="founder-title">A maioria das empresas não precisa de mais tecnologia.</p>
                 <p className="founder-line beat"><em>Precisa eliminar processos que ninguém mais questiona.</em></p>
-                <p className="founder-small beat">A Girofy nasceu dessa inquietação — entender por que tarefas seguem sendo feitas do mesmo jeito, mesmo custando tempo e dinheiro todos os dias. Não vendemos sites nem sistemas. <strong>Construímos vantagem competitiva.</strong></p>
+                <p className="founder-small beat">Não vendemos sites nem sistemas. <strong>Construímos vantagem competitiva.</strong></p>
               </blockquote>
             </div>
           </div>
@@ -271,7 +269,7 @@ export default function Page() {
             </ul>
             <div className="beat">
               <MagneticCta href={whatsappUrl} label="Fazer diagnóstico gratuito" />
-              <p className="qualify-note">Trabalhamos com poucas empresas por vez.</p>
+              <p className="qualify-note">Poucas empresas por vez · Clínicas, escolas, distribuidoras e operações locais · Salvador e todo o Brasil</p>
             </div>
             <div className="beat">
               <Objections />

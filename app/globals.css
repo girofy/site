@@ -61,27 +61,18 @@ body {
 }
 body[data-chapter='light'] { background: var(--chapter-light); }
 
-/* Blueprint grid — engineering paper under the whole film (zero JS) */
+/* Cinema vignette — depth without decoration (the stage, not a pattern) */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    radial-gradient(circle, rgba(255, 255, 255, 0.10) 1px, transparent 1.5px);
-  background-size: 72px 72px, 72px 72px, 288px 288px;
-  background-position: 0 0, 0 0, -1px -1px;
-  mask-image: radial-gradient(ellipse 90% 80% at 50% 50%, black 30%, transparent 100%);
+  background: radial-gradient(ellipse 120% 90% at 50% 40%, transparent 55%, rgba(0, 0, 0, 0.32) 100%);
   transition: opacity .9s ease;
 }
 body[data-chapter='light']::before {
-  background-image:
-    linear-gradient(to right, rgba(10, 10, 10, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(10, 10, 10, 0.05) 1px, transparent 1px),
-    radial-gradient(circle, rgba(10, 10, 10, 0.14) 1px, transparent 1.5px);
+  background: radial-gradient(ellipse 120% 90% at 50% 40%, transparent 60%, rgba(10, 10, 10, 0.08) 100%);
 }
 
 /* Film grain — kills "software black", installs "cinema black" (zero JS) */
@@ -435,8 +426,12 @@ html:not([data-giro='on']) .case-deck { display: grid; gap: 1.5rem; }
 .founder-small strong { color: var(--foreground); font-weight: 600; }
 
 /* ————— CENA FINAL ————— */
-.logo-stage { text-align: center; display: flex; flex-direction: column; align-items: center; padding-top: 34vh; }
+.logo-stage { text-align: center; display: flex; flex-direction: column; align-items: center; padding-top: clamp(9rem, 30vh, 20rem); padding-bottom: 2rem; }
 html:not([data-giro='on']) .logo-stage { padding-top: 0; }
+@media (max-height: 760px) {
+  .logo-stage { padding-top: clamp(7rem, 24vh, 12rem); }
+  .logo-stage .objections { margin-top: 1.8rem; }
+}
 .logo-stage h2 { max-width: 720px; }
 .closing-list { list-style: none; margin: 2.2rem 0 2.4rem; padding: 0; display: flex; flex-direction: column; gap: .75rem; }
 .closing-list li { position: relative; padding-left: 1.6rem; font-size: .9rem; line-height: 1.5; color: var(--foreground); text-align: left; }
