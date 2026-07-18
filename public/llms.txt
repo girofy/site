@@ -1,0 +1,13 @@
+# Girofy - Arquitetura de Soluções Digitais
+
+> A Girofy não vende apenas sites. A Girofy projeta soluções digitais de alta performance capazes de gerar crescimento, eficiência operacional, posicionamento e vantagem competitiva.
+
+## Espectro de Atuação
+- Websites & LPs Institucionais de Alta Percepção de Valor
+- Web Applications, Apps & SaaS
+- CRMs, ERPs & Dashboards Operacionais Personalizados
+- Agentes de Inteligência Artificial & Automações de Processo
+- Integrações de Engenharia Digital & APIs
+
+## Informações
+- Repositório Git: https://github.com/girofy/site
