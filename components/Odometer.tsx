@@ -24,6 +24,10 @@ export default function Odometer({
       el.textContent = `${prefix}${fmt(value)}${suffix}`
       return
     }
+    // The SSR markup already shows the real value (correct with JS disabled
+    // or mid-hydration); only now, with JS confirmed running, rewind to 0
+    // so the count-up plays.
+    el.textContent = `${prefix}${fmt(0)}${suffix}`
     let raf = 0
     const io = new IntersectionObserver(
       ([entry]) => {
@@ -48,8 +52,8 @@ export default function Odometer({
   }, [value, prefix, suffix, duration])
 
   return (
-    <span ref={ref}>
-      {prefix}0{suffix}
+    <span ref={ref} suppressHydrationWarning>
+      {prefix}{value.toLocaleString('pt-BR')}{suffix}
     </span>
   )
 }

@@ -31,19 +31,27 @@ export default function GiroDirector() {
     engine.reduced = reduced
     document.documentElement.setAttribute('data-giro', reduced ? 'static' : 'on')
 
-    const resize = () => engine.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1)
-    resize()
-    window.addEventListener('resize', resize)
-
     if (reduced) {
-      engine.scene = 'logo'
-      engine.progress = 1
-      engine.render(performance.now())
+      // No render loop in reduced mode — repaint explicitly after every
+      // resize (mobile URL-bar collapse, rotation, window resize) so the
+      // canvas bitmap (cleared by any width/height write) never goes blank.
+      const resizeReduced = () => {
+        engine.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1)
+        engine.scene = 'logo'
+        engine.progress = 1
+        engine.render(performance.now())
+      }
+      resizeReduced()
+      window.addEventListener('resize', resizeReduced)
       return () => {
-        window.removeEventListener('resize', resize)
+        window.removeEventListener('resize', resizeReduced)
         document.documentElement.removeAttribute('data-giro')
       }
     }
+
+    const resize = () => engine.resize(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1)
+    resize()
+    window.addEventListener('resize', resize)
 
     gsap.registerPlugin(ScrollTrigger)
 

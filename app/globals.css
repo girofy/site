@@ -205,7 +205,9 @@ html[data-giro='on'] .scene-view {
   position: sticky; top: 0;
   min-height: 100vh; min-height: 100dvh;
   display: flex; flex-direction: column; justify-content: center;
-  overflow: hidden;
+  /* No overflow:hidden here — content taller than the viewport (short
+     screens, longer copy) must be able to extend past the fold instead of
+     being clipped invisible. Body already clips horizontal overflow. */
 }
 html[data-giro='on'] .scene-hero { height: 200vh; }
 html[data-giro='on'] .scene-diag { height: 320vh; }
@@ -426,11 +428,15 @@ html:not([data-giro='on']) .case-deck { display: grid; gap: 1.5rem; }
 .founder-small strong { color: var(--foreground); font-weight: 600; }
 
 /* ————— CENA FINAL ————— */
-.logo-stage { text-align: center; display: flex; flex-direction: column; align-items: center; padding-top: clamp(9rem, 30vh, 20rem); padding-bottom: 2rem; }
+/* padding-top clears the emblem (engine.ts logo center ≈ 19% of viewport
+   height); the overflow fix above (not this padding) is what keeps the
+   bottom content — CTA, objections — from ever being clipped. */
+.logo-stage { text-align: center; display: flex; flex-direction: column; align-items: center; padding-top: clamp(8rem, 26vh, 18rem); padding-bottom: 2.5rem; }
 html:not([data-giro='on']) .logo-stage { padding-top: 0; }
 @media (max-height: 760px) {
-  .logo-stage { padding-top: clamp(7rem, 24vh, 12rem); }
-  .logo-stage .objections { margin-top: 1.8rem; }
+  .logo-stage { padding-top: clamp(6rem, 20vh, 11rem); }
+  .logo-stage .objections { margin-top: 1.6rem; }
+  .logo-stage .closing-list { margin-block: 1.4rem 1.6rem; }
 }
 .logo-stage h2 { max-width: 720px; }
 .closing-list { list-style: none; margin: 2.2rem 0 2.4rem; padding: 0; display: flex; flex-direction: column; gap: .75rem; }
