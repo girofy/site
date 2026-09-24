@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-background: #050506;
+  --color-foreground: #f3f1eb;
+  --color-muted-foreground: #8a8d94;
+}
+
+.timelineHost {
+  position: relative;
+  z-index: 6;
+  background: #050506;
+}
