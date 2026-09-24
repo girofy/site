@@ -1,0 +1,38 @@
+name: Extrair site da Girofy
+
+on:
+  push:
+    paths:
+      - ".github/girofy-site-vercel.zip"
+      - ".github/workflows/extract-site.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  extrair:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extrair arquivos do site
+        run: |
+          unzip -o .github/girofy-site-vercel.zip -d .
+          rm -f .github/girofy-site-vercel.zip
+          rm -f girofy-site-vercel.zip
+          rm -f girofy-portfolio-v2-timeline-integrated.zip
+
+      - name: Salvar arquivos no repositório
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração para salvar."
+            exit 0
+          fi
+
+          git commit -m "Extrair arquivos do site para Vercel"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
