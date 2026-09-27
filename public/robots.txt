@@ -4,4 +4,7 @@ Allow: /
 User-agent: OAI-SearchBot
 Allow: /
 
+User-agent: GPTBot
+Allow: /
+
 Sitemap: https://girofy.site/sitemap.xml

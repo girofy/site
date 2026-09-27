@@ -1,36 +1,39 @@
-# Girofy
+# Girofy — React + TypeScript + Tailwind + shadcn structure
 
-Site da Girofy em React, TypeScript, Vite e Tailwind CSS.
+Base: projeto cinematográfico enviado pelo usuário, migrado para Vite/React/TypeScript sem reaproveitar o visual da versão descartada. Da versão descartada foram preservadas apenas a pesquisa/infraestrutura de SEO e descoberta.
 
-## Rodar localmente
+## Estrutura
+- `src/components/ui/` — componentes reutilizáveis no padrão shadcn. O Timeline está em `src/components/ui/timeline.tsx`.
+- `src/components/cinematic/` — motor e experiência cinematográfica principal.
+- `src/components/sections/` — composição de seções específicas da Girofy.
+- `src/styles/globals.css` — Tailwind e tokens globais.
+- `src/styles/cinematic.css` — direção visual da experiência original.
+- `public/` — assets, portfólio e arquivos técnicos de SEO/GEO.
 
+O shadcn usa o alias `@/components/ui`, mapeado em `components.json` e `tsconfig.app.json`. Em Vite, o diretório físico padrão escolhido aqui é `src/components/ui`, que é equivalente a `/components/ui` através do alias `@`.
+
+## Dependências
 ```bash
 npm install
+```
+O componente Timeline depende de `gsap` e usa `ScrollTrigger` + `SplitText`.
+
+## Desenvolvimento
+```bash
 npm run dev
 ```
 
-## Publicar na Vercel
-
-Importe este repositório na Vercel. Ela detecta o Vite automaticamente. Use estas configurações se precisar defini-las manualmente:
-
-- **Framework Preset:** Vite
-- **Build Command:** `npm run build`
-- **Output Directory:** `dist`
-- **Install Command:** `npm install`
-
-O build de produção pode ser validado localmente com:
-
+## Build
 ```bash
-npm ci
 npm run build
 ```
+A saída fica em `dist/`.
 
-## Estrutura
+## shadcn CLI
+A estrutura já está preparada. Para adicionar novos componentes:
+```bash
+npx shadcn@latest add button
+```
 
-- `src/main.tsx` inicializa a aplicação React e a timeline.
-- `src/legacy-app.js` contém a experiência cinematográfica original.
-- `components/ui/timeline.tsx` implementa a timeline GSAP.
-- `styles.css` contém os estilos da experiência.
-- `public/portfolio` e `public/assets` guardam imagens servidas diretamente pelo Vite.
-
-As imagens em `public/` são copiadas para a raiz de `dist/` no build. O projeto usa o diretório `components/ui` para manter componentes reutilizáveis e imports compatíveis com a estrutura shadcn.
+## Observação de conteúdo
+A Timeline foi adaptada para a narrativa comercial da Girofy: diagnóstico → tese de percepção → direção criativa → arquitetura narrativa → motion/3D → performance → conversão. Não foram mantidos os textos genéricos de roadmap do componente de referência.

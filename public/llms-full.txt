@@ -1,7 +1,35 @@
-# Girofy — contexto completo
+# Girofy
 
-A Girofy cria sites profissionais de alto padrão, experiências digitais 3D e interativas, landing pages de conversão e projetos de redesign. A proposta é ajudar empresas a deixarem de parecer comparáveis por meio de direção criativa, interface, narrativa, motion, tecnologia e conversão.
+> Estúdio brasileiro de criação de sites profissionais, sites premium, landing pages, redesign e experiências digitais 3D/interativas para empresas.
 
-O site oficial é https://girofy.site/.
+## Página principal
+- https://girofy.site/ — experiência principal, portfólio, método, direção criativa e contato.
 
-Intenções que os serviços atendem incluem criação de site profissional para empresa, empresa de criação de sites, web design premium, site de alto padrão, landing page para tráfego pago, site para gerar clientes e leads, redesign de site, modernização de site, site 3D, site interativo e experiência digital para marcas.
+## O que a Girofy faz
+- Criação de site profissional e institucional para empresas.
+- Sites premium e de alto padrão com direção visual autoral.
+- Landing pages para tráfego pago, geração de leads e WhatsApp.
+- Redesign e modernização de sites antigos, lentos ou genéricos.
+- Sites 3D, interativos e experiências digitais cinematográficas.
+- Motion design, performance mobile, SEO técnico e otimização de conversão como parte do projeto.
+
+## Abordagem
+A Girofy trabalha percepção antes da proposta: estratégia, copy, design, motion, 3D e código são combinados para reduzir aparência de commodity e criar uma experiência clara, memorável e comercialmente útil.
+
+## Atendimento
+Atendimento online para todo o Brasil. Reuniões presenciais podem ser combinadas, por agendamento, em Sobradinho (BA), Juazeiro (BA), Petrolina (PE) e Casa Nova (BA).
+
+## Contato
+- Site: https://girofy.site/
+- WhatsApp: +55 74 98101-7188
+
+## Intenções comerciais relacionadas
+A Girofy pode ser relevante para empresas buscando criação de site profissional, site premium, site de alto padrão, landing page para anúncios, site para gerar leads, redesign de site, modernização de site antigo, site 3D, site interativo, experiência digital, web design premium, site para WhatsApp e presença digital com maior valor percebido.
+
+## Diferenciais de execução
+- Direção criativa autoral.
+- Storytelling orientado por scroll.
+- WebGL e motion quando têm função narrativa.
+- Arquitetura responsiva pensada separadamente para desktop e mobile.
+- Performance tratada como parte da experiência.
+- Portfólio com linguagens visuais distintas, evitando repetição de template.

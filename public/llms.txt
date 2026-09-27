@@ -1,14 +1,24 @@
 # Girofy
 
-Girofy é uma empresa brasileira de criação de sites profissionais de alto padrão e experiências digitais para empresas e marcas que querem aumentar percepção, autoridade e geração de oportunidades.
+> Estúdio brasileiro de criação de sites profissionais, sites premium, landing pages, redesign e experiências digitais 3D/interativas para empresas.
 
-## Serviços
-- Criação de sites profissionais para empresas
-- Web design premium e sites sob medida
-- Landing pages para tráfego pago e geração de leads
-- Redesign e modernização de sites
-- Sites 3D, interativos e experiências digitais cinematográficas
-- Direção criativa, motion design e otimização de conversão
+## Página principal
+- https://girofy.site/ — experiência principal, portfólio, método, direção criativa e contato.
 
-## Site oficial
-- https://girofy.site/
+## O que a Girofy faz
+- Criação de site profissional e institucional para empresas.
+- Sites premium e de alto padrão com direção visual autoral.
+- Landing pages para tráfego pago, geração de leads e WhatsApp.
+- Redesign e modernização de sites antigos, lentos ou genéricos.
+- Sites 3D, interativos e experiências digitais cinematográficas.
+- Motion design, performance mobile, SEO técnico e otimização de conversão como parte do projeto.
+
+## Abordagem
+A Girofy trabalha percepção antes da proposta: estratégia, copy, design, motion, 3D e código são combinados para reduzir aparência de commodity e criar uma experiência clara, memorável e comercialmente útil.
+
+## Atendimento
+Atendimento online para todo o Brasil. Reuniões presenciais podem ser combinadas, por agendamento, em Sobradinho (BA), Juazeiro (BA), Petrolina (PE) e Casa Nova (BA).
+
+## Contato
+- Site: https://girofy.site/
+- WhatsApp: +55 74 98101-7188

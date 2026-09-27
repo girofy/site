@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 240 6% 2.5%;
+  --foreground: 60 8% 96%;
+  --muted: 240 4% 12%;
+  --muted-foreground: 240 5% 64%;
+}
+
+html { background: #050506; }
+body { margin: 0; background: #050506; color: #f4f2ed; }
+* { box-sizing: border-box; }

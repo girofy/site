@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url>
     <loc>https://girofy.site/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
+    <image:image><image:loc>https://girofy.site/portfolio/01-oticas-do-vale.webp</image:loc><image:title>Projeto Óticas do Vale — Girofy</image:title></image:image>
+    <image:image><image:loc>https://girofy.site/portfolio/07-nayane-rodrigues.webp</image:loc><image:title>Projeto Nayane Rodrigues — Girofy</image:title></image:image>
+    <image:image><image:loc>https://girofy.site/portfolio/10-vertice.webp</image:loc><image:title>Projeto Vértice — Girofy</image:title></image:image>
+    <image:image><image:loc>https://girofy.site/portfolio/14-casa-norte.webp</image:loc><image:title>Projeto Casa Norte — Girofy</image:title></image:image>
   </url>
 </urlset>
