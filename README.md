@@ -1,39 +1,42 @@
-# Girofy — React + TypeScript + Tailwind + shadcn structure
+# Girofy — experiência digital imersiva
 
-Base: projeto cinematográfico enviado pelo usuário, migrado para Vite/React/TypeScript sem reaproveitar o visual da versão descartada. Da versão descartada foram preservadas apenas a pesquisa/infraestrutura de SEO e descoberta.
+Experiência autoral em React + TypeScript. A narrativa transforma o scroll em uma travessia por uma matéria cromada: o usuário vê sinais do mercado indiferenciado, atravessa a ruptura, encontra projetos reais e chega ao método e à conversa comercial.
 
-## Estrutura
-- `src/components/ui/` — componentes reutilizáveis no padrão shadcn. O Timeline está em `src/components/ui/timeline.tsx`.
-- `src/components/cinematic/` — motor e experiência cinematográfica principal.
-- `src/components/sections/` — composição de seções específicas da Girofy.
-- `src/styles/globals.css` — Tailwind e tokens globais.
-- `src/styles/cinematic.css` — direção visual da experiência original.
-- `public/` — assets, portfólio e arquivos técnicos de SEO/GEO.
+## Direção e estrutura
 
-O shadcn usa o alias `@/components/ui`, mapeado em `components.json` e `tsconfig.app.json`. Em Vite, o diretório físico padrão escolhido aqui é `src/components/ui`, que é equivalente a `/components/ui` através do alias `@`.
+- `src/components/cinematic/ImmersiveExperience.tsx` — cena Three.js, shaders 4D, pinning do ScrollTrigger, áudio opcional, leitura local de capturas, navegação de projetos e formulário de contato.
+- `src/lib/kinetic.js` — progressão de capítulo, campo de atração do ponteiro e validação de arquivo.
+- `src/lib/noise4d.glsl` — ruído Simplex 4D; licença em `NOISE-LICENSE.txt`.
+- `src/styles/cinematic.css` — direção de arte, estados tipográficos, cenas e composições próprias para telas menores.
+- `public/portfolio/` e `public/assets/` — projetos e retrato já fornecidos no material da Girofy.
 
-## Dependências
-```bash
-npm install
-```
-O componente Timeline depende de `gsap` e usa `ScrollTrigger` + `SplitText`.
+Os componentes das versões anteriores permanecem no repositório, mas o `src/App.tsx` atual monta somente a experiência imersiva.
+
+## Interações
+
+- O cursor deforma a membrana e atrai fragmentos cromados.
+- A rolagem prende a câmera por sete capítulos e move o cenário no eixo de profundidade.
+- A leitura de captura de site funciona no próprio navegador e extrai uma cor média; o arquivo não é enviado a um servidor.
+- O portfólio pode ser navegado por botões e lista de projetos.
+- O campo de marca grava o nome na placa e abre uma conversa da Girofy no WhatsApp.
+- O áudio é opt-in e só é criado após ação do visitante.
+
+## Acessibilidade e degradação elegante
+
+`prefers-reduced-motion` remove o pinning e apresenta todos os capítulos como leitura vertical. O conteúdo essencial continua em HTML. Se WebGL não estiver disponível, o percurso de scroll e a tipografia permanecem ativos com uma composição estática de linhas metálicas.
 
 ## Desenvolvimento
+
 ```bash
+npm install
 npm run dev
 ```
 
-## Build
+## Verificação
+
 ```bash
+npm test
 npm run build
 ```
-A saída fica em `dist/`.
 
-## shadcn CLI
-A estrutura já está preparada. Para adicionar novos componentes:
-```bash
-npx shadcn@latest add button
-```
-
-## Observação de conteúdo
-A Timeline foi adaptada para a narrativa comercial da Girofy: diagnóstico → tese de percepção → direção criativa → arquitetura narrativa → motion/3D → performance → conversão. Não foram mantidos os textos genéricos de roadmap do componente de referência.
+A saída otimizada fica em `dist/`. O motor Three.js é carregado como pacote assíncrono separado do conteúdo e da primeira dobra.

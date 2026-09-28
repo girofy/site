@@ -1,56 +1,28 @@
-# Timeline integration notes
+# Notas de integração — experiência Girofy
 
-## What was integrated
-The Hyperiux/GSAP pinned horizontal timeline mechanic was integrated as `src/components/ui/timeline.tsx` and composed through `src/components/sections/TimelineDemo.tsx`.
+A implementação cinematográfica substitui a composição de seções da versão integrada anterior. `src/App.tsx` monta agora `ImmersiveExperience`; os componentes anteriores continuam no projeto como histórico reutilizável, mas não fazem parte da experiência publicada.
 
-## Existing codebase audit
-The uploaded project was a no-build React UMD project (`React.createElement`, local React vendor scripts, plain CSS) and did **not** have:
-- TypeScript
-- Tailwind CSS
-- shadcn structure
-- npm GSAP dependency
+## Arquitetura ativa
 
-The project was migrated to Vite + React + TypeScript + Tailwind and prepared for shadcn via `components.json`.
+- **Cena:** Three.js com membrana deformável via Simplex Noise 4D, fragmentos instanciados em metal, enquadramento de projetos e trilho espacial do método.
+- **Timeline:** um ScrollTrigger fixa a cena e compartilha um único progresso entre câmera, shader e sete estados de narrativa.
+- **Interface:** DOM acessível para texto, navegação e CTA; o WebGL sustenta a metáfora e não carrega a copy crítica.
+- **Conversão:** leitura local de captura, navegação de portfólio, placa personalizada e entrada no WhatsApp.
+- **Som:** camada de 44 Hz, textura de transição e impactos curtos, acionada apenas quando a pessoa habilita o áudio.
 
-## Default paths
-- Reusable UI components: `src/components/ui/`
-- Global Tailwind styles: `src/styles/globals.css`
-- Existing cinematic styles: `src/styles/cinematic.css`
-- shadcn alias: `@/components/ui`
+## Decisões de resiliência
 
-`src/components/ui` is important because shadcn-generated imports and future CLI additions resolve consistently through the `@/components/ui` alias.
+- O pacote de Three.js é carregado sob demanda, sem bloquear a montagem do conteúdo.
+- O pinning funciona independentemente do contexto WebGL.
+- A falha de WebGL preserva os capítulos e os CTAs.
+- O modo `prefers-reduced-motion` não baixa o motor 3D e apresenta as cenas em sequência vertical.
+- Os arquivos do scanner permanecem locais; somente a cor média é extraída para a demonstração visual.
 
-## Dependencies
-Required by the provided component:
-- `gsap` (`ScrollTrigger` + `SplitText`)
+## Comandos
 
-Common shadcn dependencies were also prepared (`clsx`, `tailwind-merge`, `class-variance-authority`, `lucide-react`, `tailwindcss-animate`). No Lucide icon was forced into Timeline because the supplied component does not require an icon.
+```bash
+npm test
+npm run build
+```
 
-## Data/props selected
-Instead of keeping the generic 2020–2026 roadmap copy, the same motion system now tells the Girofy process:
-1. Diagnóstico
-2. Tese de percepção
-3. Direção criativa
-4. Arquitetura narrativa
-5. Motion + 3D
-6. Performance
-7. Conversão
-
-The component accepts `topItems` and `bottomItems`, so content can change without editing animation logic.
-
-## State management
-No global state/provider is necessary. The component uses refs, GSAP context and `prefers-reduced-motion` only.
-
-## Assets
-The timeline uses an existing Girofy portfolio asset (`/portfolio/10-vertice.webp`) rather than adding stock imagery. This avoids another external dependency and keeps the section tied to the portfolio.
-
-## Responsive behavior
-- Desktop: pinned horizontal motion over `200vw` of scroll space.
-- Mobile: taller `400vh` interaction window, wider track, larger typography and milestone spacing.
-- Reduced motion: lines and content remain readable without scroll reveals.
-
-## Placement
-The component is placed after the core cinematic experience and before the final risk-reversal/contact sequence. It acts as the bridge between emotional proof and the buying decision.
-
-## SEO preserved from the discarded branch
-Only the search/discovery infrastructure was carried over conceptually: metadata, canonical, Organization/Service/WebSite structured data, robots.txt, sitemap.xml, llms.txt and the broader commercial intent language. The discarded branch's visual implementation was not reused.
+O ruído 4D é derivado de Ashima Arts / Stefan Gustavson; consulte `NOISE-LICENSE.txt`.
