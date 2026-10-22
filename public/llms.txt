@@ -1,24 +1,23 @@
 # Girofy
 
-> Estúdio brasileiro de criação de sites profissionais, sites premium, landing pages, redesign e experiências digitais 3D/interativas para empresas.
+> A Girofy é uma software house brasileira que projeta e desenvolve sites empresariais, software sob medida, sistemas internos, aplicativos, plataformas digitais e automações. O trabalho começa no problema do comprador ou no processo que a equipe precisa fazer avançar.
 
-## Página principal
-- https://girofy.site/ — experiência principal, portfólio, método, direção criativa e contato.
+## Soluções
+- [Software sob medida](https://girofy.site/software-sob-medida.html): processos próprios que ferramentas prontas não acompanham.
+- [Sistemas internos](https://girofy.site/sistemas-internos.html): solicitações, aprovações e responsabilidades que hoje se perdem entre planilhas e conversas.
+- [Aplicativos empresariais](https://girofy.site/aplicativos-empresariais.html): tarefas de clientes ou equipes que precisam funcionar bem no celular.
+- [Plataformas digitais](https://girofy.site/plataformas-digitais.html): jornadas contínuas que conectam pessoas, informação e serviços.
+- [Automação e integrações](https://girofy.site/automacao-integracoes.html): trabalho repetível, transferência manual e exceções entre ferramentas.
+- [Sites para empresas](https://girofy.site/sites-para-empresas.html): oferta, diferenciais e próximo passo para quem pesquisa antes de chamar.
+- [Criação de sites para empresas no Vale do São Francisco](https://girofy.site/criacao-de-sites-para-empresas.html): página regional sobre estrutura de site, SEO, GEO e contato para empresas de Petrolina, Juazeiro, Sobradinho e região.
+- [Guia de projeto](https://girofy.site/guia-escolher-software.html): escopo, custo, compra versus desenvolvimento e critérios de contratação.
 
-## O que a Girofy faz
-- Criação de site profissional e institucional para empresas.
-- Sites premium e de alto padrão com direção visual autoral.
-- Landing pages para tráfego pago, geração de leads e WhatsApp.
-- Redesign e modernização de sites antigos, lentos ou genéricos.
-- Sites 3D, interativos e experiências digitais cinematográficas.
-- Motion design, performance mobile, SEO técnico e otimização de conversão como parte do projeto.
+## Começar um projeto
+- [Página inicial](https://girofy.site/)
+- [Descrever um desafio](https://girofy.site/projeto.html)
+- [Contato por e-mail](mailto:girofy.com@gmail.com)
 
-## Abordagem
-A Girofy trabalha percepção antes da proposta: estratégia, copy, design, motion, 3D e código são combinados para reduzir aparência de commodity e criar uma experiência clara, memorável e comercialmente útil.
-
-## Atendimento
-Atendimento online para todo o Brasil. Reuniões presenciais podem ser combinadas, por agendamento, em Sobradinho (BA), Juazeiro (BA), Petrolina (PE) e Casa Nova (BA).
-
-## Contato
-- Site: https://girofy.site/
-- WhatsApp: +55 74 98101-7188
+## Sobre os estudos e os resultados
+- A galeria do site mostra estudos conceituais de interface; não apresenta esses conceitos como clientes, implantações ou cases.
+- A Girofy não promete posições no Google, quantidade de visitas ou resultados comerciais garantidos.
+- O briefing encaminha uma mensagem de WhatsApp para a pessoa revisar e enviar; o site não armazena respostas em um CRM.

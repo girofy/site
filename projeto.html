@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<script src="brand-boot.js"></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f4f4f2"><meta name="description" content="Descreva à Girofy o processo, tarefa ou dúvida do comprador que sua empresa quer resolver."><meta name="robots" content="noindex,follow">
+<title>Conte seu desafio — Girofy</title>
+<link rel="icon" href="/favicon.png" type="image/png" sizes="512x512"><link rel="apple-touch-icon" href="/favicon.png">
+<link rel="preload" href="assets/animations/girofy-intro.svg" as="image" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<script defer src="brand-loading.js"></script>
+<script defer src="config.js"></script><script defer src="projeto.js"></script>
+</head>
+<body class="project-page">
+<div class="brand-loading" id="brand-loading" aria-hidden="true">
+  <img src="assets/animations/girofy-intro.svg" data-current="assets/animations/girofy-intro.svg" data-intro="assets/animations/girofy-intro.svg" data-loop="assets/animations/girofy-loader.svg" alt="" decoding="async" fetchpriority="high">
+  <span class="brand-loading-fallback">GIROFY</span>
+</div>
+
+<a class="skip" href="#project-form">Pular para o formulário</a>
+<header class="site-header">
+ <a class="brand" href="index.html" aria-label="Girofy, voltar ao início"><img class="brand-symbol" src="assets/images/symbol-dark.webp" alt=""><img class="brand-word" src="assets/images/word-dark.webp" alt="Girofy"></a>
+ <span class="header-note">SITES + SISTEMAS DIGITAIS</span>
+ <a id="project-header-whatsapp" class="header-cta" href="https://wa.me/5574988126578" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a>
+ <a class="menu-button project-menu-back" href="index.html" aria-label="Voltar para a página inicial"><span class="project-back-arrow">←</span></a>
+</header>
+<main class="project-main">
+ <a class="project-back" href="index.html"><span>←</span> Voltar para a Girofy</a>
+ <p class="eyebrow">PRIMEIRO, O QUE ACONTECE NA EMPRESA</p>
+ <h1>O que está travando a próxima etapa?</h1>
+ <p class="project-intro">Não precisa chegar com a solução pronta. Conte uma situação real: onde o cliente fica sem resposta, onde a equipe perde tempo ou o que ainda é difícil de encontrar.</p>
+ <form class="project-form" id="project-form">
+  <fieldset>
+   <legend>Qual destas situações chega mais perto?</legend>
+   <div class="project-choice-row">
+    <label><input type="radio" name="challengeType" value="Quem pesquisa não encontra ou não entende a empresa" required><span>Quem pesquisa não encontra ou não entende a empresa</span></label>
+    <label><input type="radio" name="challengeType" value="A oferta está espalhada entre perfil, PDF e mensagens"><span>A oferta está espalhada entre perfil, PDF e mensagens</span></label>
+    <label><input type="radio" name="challengeType" value="A equipe acompanha etapas em planilhas ou conversas"><span>A equipe acompanha etapas em planilhas ou conversas</span></label>
+    <label><input type="radio" name="challengeType" value="O cliente não consegue solicitar ou acompanhar online"><span>O cliente não consegue solicitar ou acompanhar online</span></label>
+    <label><input type="radio" name="challengeType" value="Tarefas repetidas passam de mão em mão"><span>Tarefas repetidas passam de mão em mão</span></label>
+    <label><input type="radio" name="challengeType" value="Ainda estou entendendo onde está o problema"><span>Ainda estou entendendo onde está o problema</span></label>
+   </div>
+  </fieldset>
+  <div class="project-field-grid">
+   <label class="project-field">Seu nome<input name="name" autocomplete="name" placeholder="Como podemos chamar você?" required maxlength="100"></label>
+   <label class="project-field">Empresa<input name="company" autocomplete="organization" placeholder="Nome da empresa" required maxlength="140"></label>
+   <label class="project-field">WhatsApp ou e-mail para retorno<input name="replyTo" autocomplete="email" placeholder="Seu melhor contato" required maxlength="160"></label>
+   <label class="project-field full">O que acontece hoje?<textarea name="situation" placeholder="Ex.: o pedido chega por mensagem, alguém copia para uma planilha e às vezes a equipe perde o retorno." required minlength="20" maxlength="1500"></textarea></label>
+  </div>
+  <div class="project-form-footer">
+   <button class="button button-dark" type="submit">Preparar mensagem <span>↗</span></button>
+   <p class="project-privacy">O WhatsApp abrirá com um rascunho para você revisar. A Girofy só recebe essas informações quando você decidir enviar a mensagem.</p>
+  </div>
+  <p class="project-feedback" id="project-feedback" role="status" aria-live="polite"></p>
+ </form>
+</main>
+<footer><a class="brand footer-brand" href="index.html"><img src="assets/images/word-dark.webp" alt="Girofy"></a><span>© Girofy</span><a href="mailto:girofy.com@gmail.com">girofy.com@gmail.com</a></footer>
+</body>
+</html>

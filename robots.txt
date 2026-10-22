@@ -1,0 +1,35 @@
+User-agent: *
+Allow: /
+
+# OpenAI search and user-initiated fetches; foundation-model training stays blocked.
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: GPTBot
+Disallow: /
+
+# Perplexity search indexing and user-initiated fetches.
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+# Claude search and user-initiated fetches; foundation-model training stays blocked.
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+# Google-Extended controls Gemini grounding and potential model training use.
+User-agent: Google-Extended
+Allow: /
+
+Sitemap: https://girofy.site/sitemap.xml
