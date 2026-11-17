@@ -25,6 +25,7 @@ O endpoint MCP preparado fica em `functions/mcp.js`. Ele não faz parte do fluxo
 - Os projetos publicados são públicos. Arquivos privados comuns, como `.env`, chaves e pastas de dependências, são recusados. O HTML/SVG publicado roda sob CSP sandbox, sem compartilhar cookies ou `localStorage` do domínio oficial.
 - O atalho flutuante da Netlify abre o endereço HTTPS configurado em **Configurações**; a URL e a visibilidade do botão ficam salvas no dispositivo do navegador.
 - A chave abre uma sessão segura por sete dias. Para sair, use **Bloquear painel**.
+- **API e MCP para agentes:** em **Configurações → Agentes e API** você cria tokens (`read`, `deploy` ou `admin`) e conecta Claude, Cursor ou scripts em `/api/hosp/mcp` e `/api/hosp`. Também há nota por versão, publicar sem ativar com link de prévia, voltar versão, fixar versão, redirecionamentos, cabeçalhos, noindex, página 404, apelidos de endereço, copiar link, uso e registro de atividade. Guia completo em `docs/API-HOSPEDAGEM.md`. Validado só em ambiente local com `npm run smoke:api`.
 - No Site oficial, `HOSP_ADMIN_PASSWORD` é configurado como segredo de ambiente. Não salve a chave no projeto ou no ZIP.
 
 ## Páginas indexáveis

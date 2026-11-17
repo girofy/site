@@ -9,6 +9,19 @@ type Version = {
   publishedAt: string;
   fileCount: number;
   totalBytes: number;
+  note?: string;
+  source?: string;
+};
+
+type Redirect = { from: string; to: string; status: number };
+
+type ProjectConfig = {
+  spaFallback: boolean;
+  noindex: boolean;
+  cacheSeconds: number;
+  notFound: string;
+  redirects: Redirect[];
+  headers: Record<string, string>;
 };
 
 type Project = {
@@ -23,6 +36,19 @@ type Project = {
   fileCount: number;
   totalBytes: number;
   versions: Version[];
+  pinned?: string[];
+  aliases?: string[];
+  settings?: ProjectConfig;
+};
+
+type TokenInfo = {
+  id: string;
+  name: string;
+  scope: "read" | "deploy" | "admin";
+  createdAt: string;
+  expiresAt: string | null;
+  lastUsedAt: string | null;
+  expired: boolean;
 };
 
 type StagedFile = { path: string; file: File };
@@ -60,6 +86,18 @@ export default function HospPage() {
   const [restoreVersion, setRestoreVersion] = useState("");
   const [loading, setLoading] = useState(true);
   const [dragging, setDragging] = useState(false);
+  const [note, setNote] = useState("");
+  const [origin, setOrigin] = useState("");
+  const [tokens, setTokens] = useState<TokenInfo[]>([]);
+  const [tokenName, setTokenName] = useState("");
+  const [tokenScope, setTokenScope] = useState<TokenInfo["scope"]>("deploy");
+  const [tokenDays, setTokenDays] = useState("");
+  const [freshToken, setFreshToken] = useState("");
+  const [configFor, setConfigFor] = useState("");
+  const [config, setConfig] = useState<ProjectConfig | null>(null);
+  const [redirectsText, setRedirectsText] = useState("");
+  const [headersText, setHeadersText] = useState("");
+  const [aliasValue, setAliasValue] = useState("");
   const zipInput = useRef<HTMLInputElement>(null);
   const filesInput = useRef<HTMLInputElement>(null);
   const folderInput = useRef<HTMLInputElement>(null);
@@ -306,7 +344,7 @@ export default function HospPage() {
         body: JSON.stringify({
           action: "publish", slug: normalizedSlug,
           name: name.trim() || normalizedSlug,
-          version: begin.version, entry
+          version: begin.version, entry, note: note.trim()
         })
       });
       setProjects((current) => [
@@ -319,6 +357,7 @@ export default function HospPage() {
       setArchiveRoot("");
       setEntry("");
       setName("");
+      setNote("");
       setSlug("");
       setSlugEdited(false);
       setMessage("Publicado. Seu site está no ar em girofy.site/" + result.project.slug);
@@ -377,6 +416,126 @@ export default function HospPage() {
       });
       setProjects((current) => current.filter((item) => item.slug !== project.slug));
       setMessage("Projeto apagado.");
+    } catch (error) {
+      setMessage(readError(error));
+    }
+  }
+
+  async function copyText(value: string, done: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      setMessage(done);
+    } catch {
+      setMessage("Não consegui copiar sozinho. Toque e segure o texto para copiar.");
+    }
+  }
+
+  const loadTokens = useCallback(async () => {
+    try {
+      const result = await api<{ tokens: TokenInfo[] }>("/api/hosp?action=tokens_list");
+      setTokens(result.tokens);
+    } catch (error) {
+      setMessage(readError(error));
+    }
+  }, []);
+
+  useEffect(() => { setOrigin(window.location.origin); }, []);
+  useEffect(() => { if (settingsOpen && auth === "ready") void loadTokens(); }, [settingsOpen, auth, loadTokens]);
+
+  async function createToken(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    try {
+      const result = await api<{ token: string }>("/api/hosp", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "token_create", name: tokenName, scope: tokenScope,
+          expiresInDays: tokenDays ? Number(tokenDays) : null
+        })
+      });
+      setFreshToken(result.token);
+      setTokenName("");
+      setTokenDays("");
+      await loadTokens();
+    } catch (error) {
+      setMessage(readError(error));
+    }
+  }
+
+  async function revokeToken(token: TokenInfo) {
+    if (!window.confirm("Revogar o token “" + token.name + "”? Quem usa esse token perde o acesso na hora.")) return;
+    try {
+      await api("/api/hosp", { method: "POST", body: JSON.stringify({ action: "token_revoke", id: token.id }) });
+      setMessage("Token revogado.");
+      await loadTokens();
+    } catch (error) {
+      setMessage(readError(error));
+    }
+  }
+
+  async function rollbackProject(project: Project) {
+    if (!window.confirm("Voltar “" + project.name + "” para a versão anterior?")) return;
+    try {
+      await api("/api/hosp", { method: "POST", body: JSON.stringify({ action: "rollback", slug: project.slug }) });
+      setMessage("Voltou para a versão anterior.");
+      await loadProjects();
+    } catch (error) {
+      setMessage(readError(error));
+    }
+  }
+
+  async function togglePin(project: Project, version: string) {
+    const pinned = !(project.pinned ?? []).includes(version);
+    try {
+      await api("/api/hosp", {
+        method: "POST", body: JSON.stringify({ action: "pin", slug: project.slug, version, pinned })
+      });
+      setMessage(pinned ? "Versão fixada. Ela não será apagada." : "Versão solta.");
+      await loadProjects();
+    } catch (error) {
+      setMessage(readError(error));
+    }
+  }
+
+  function openConfig(project: Project) {
+    if (configFor === project.slug) { setConfigFor(""); return; }
+    const current: ProjectConfig = project.settings ?? {
+      spaFallback: true, noindex: false, cacheSeconds: 300, notFound: "", redirects: [], headers: {}
+    };
+    setConfig(current);
+    setRedirectsText(current.redirects.map((rule) => rule.from + " -> " + rule.to + " " + rule.status).join("\n"));
+    setHeadersText(Object.entries(current.headers).map(([key, value]) => key + ": " + value).join("\n"));
+    setAliasValue("");
+    setConfigFor(project.slug);
+  }
+
+  async function saveConfig(project: Project) {
+    if (!config) return;
+    try {
+      await api("/api/hosp", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "settings", slug: project.slug,
+          settings: {
+            spaFallback: config.spaFallback, noindex: config.noindex,
+            cacheSeconds: Number(config.cacheSeconds), notFound: config.notFound.trim(),
+            redirects: parseRedirects(redirectsText), headers: parseHeaders(headersText)
+          }
+        })
+      });
+      setMessage("Configurações salvas.");
+      setConfigFor("");
+      await loadProjects();
+    } catch (error) {
+      setMessage(readError(error));
+    }
+  }
+
+  async function changeAlias(project: Project, action: "alias_add" | "alias_remove", alias: string) {
+    try {
+      await api("/api/hosp", { method: "POST", body: JSON.stringify({ action, slug: project.slug, alias }) });
+      setAliasValue("");
+      setMessage(action === "alias_add" ? "Apelido criado." : "Apelido removido.");
+      await loadProjects();
     } catch (error) {
       setMessage(readError(error));
     }
@@ -498,6 +657,66 @@ export default function HospPage() {
               <button className="button button-outline" type="button" onClick={saveNetlifyShortcut}>Salvar destino</button>
             </div>
           </div>
+          <div className="agent-panel">
+            <div>
+              <p className="eyebrow">AGENTES E API</p>
+              <h3>Conecte um agente de IA</h3>
+              <p>Crie um token e use o endereço MCP abaixo em Claude, Cursor ou qualquer cliente MCP. O mesmo token funciona na API REST, com <code>Authorization: Bearer</code>. Leia o guia em docs/API-HOSPEDAGEM.md.</p>
+              <label className="field-label" htmlFor="mcp-url">Endereço MCP</label>
+              <div className="copy-line">
+                <input id="mcp-url" className="field" readOnly value={origin + "/api/hosp/mcp"} onFocus={(event) => event.currentTarget.select()} />
+                <button className="button button-outline" type="button" onClick={() => void copyText(origin + "/api/hosp/mcp", "Endereço MCP copiado.")}>Copiar</button>
+              </div>
+            </div>
+            <div>
+              {freshToken && (
+                <div className="token-secret" role="status">
+                  <strong>Guarde este token agora. Ele não aparece de novo.</strong>
+                  <div className="copy-line">
+                    <input className="field" readOnly value={freshToken} onFocus={(event) => event.currentTarget.select()} aria-label="Token novo" />
+                    <button className="button button-light" type="button" onClick={() => void copyText(freshToken, "Token copiado.")}>Copiar</button>
+                  </div>
+                  <button className="text-button" type="button" onClick={() => setFreshToken("")}>Já guardei</button>
+                </div>
+              )}
+              <form className="token-form" onSubmit={(event) => void createToken(event)}>
+                <div>
+                  <label className="field-label" htmlFor="token-name">Nome do agente</label>
+                  <input id="token-name" className="field" value={tokenName} onChange={(event) => setTokenName(event.target.value)} placeholder="Claude do escritório" maxLength={60} required />
+                </div>
+                <div>
+                  <label className="field-label" htmlFor="token-scope">Permissão</label>
+                  <select id="token-scope" className="field select-field" value={tokenScope} onChange={(event) => setTokenScope(event.target.value as TokenInfo["scope"])}>
+                    <option value="read">Só leitura</option>
+                    <option value="deploy">Publicar e gerenciar</option>
+                    <option value="admin">Tudo, inclusive apagar</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="field-label" htmlFor="token-days">Validade (dias, opcional)</label>
+                  <input id="token-days" className="field" type="number" min={1} max={365} inputMode="numeric" value={tokenDays} onChange={(event) => setTokenDays(event.target.value)} placeholder="Sem validade" />
+                </div>
+                <button className="button button-light" type="submit" disabled={!tokenName.trim()}>Criar token</button>
+              </form>
+              {tokens.length > 0 && (
+                <ul className="token-list">
+                  {tokens.map((token) => (
+                    <li key={token.id}>
+                      <div>
+                        <strong>{token.name}</strong>
+                        <span>
+                          {token.scope === "read" ? "Só leitura" : token.scope === "deploy" ? "Publicar e gerenciar" : "Tudo"}
+                          {" · "}{token.lastUsedAt ? "usado " + formatDate(token.lastUsedAt) : "nunca usado"}
+                          {token.expiresAt ? " · " + (token.expired ? "expirado" : "expira " + formatDate(token.expiresAt)) : ""}
+                        </span>
+                      </div>
+                      <button className="text-button" type="button" onClick={() => void revokeToken(token)}>Revogar</button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </section>
       )}
 
@@ -574,7 +793,10 @@ export default function HospPage() {
                 setSlug(slugify(event.target.value));
               }} placeholder="meu-site" maxLength={40} />
             </div>
-            <p className="field-help">Use letras minúsculas, números e hífens.</p>
+            <p className="field-help">Use letras minúsculas, números e hífens. Se o endereço já existe, a nova publicação vira uma nova versão e a anterior fica guardada.</p>
+
+            <label className="field-label" htmlFor="project-note">Nota da versão (opcional)</label>
+            <input id="project-note" className="field" value={note} onChange={(event) => setNote(event.target.value)} placeholder="O que mudou nesta versão" maxLength={200} />
 
             {htmlFiles.length > 0 && (
               <>
@@ -638,6 +860,15 @@ export default function HospPage() {
                     {project.activeVersion && <span>{formatBytes(project.totalBytes)}</span>}
                     {project.publishedAt && <span>Atualizado {formatDate(project.publishedAt)}</span>}
                   </div>
+                  <div className="project-tools">
+                    <button className="text-button" onClick={() => void copyText(origin + project.url, "Link copiado.")}>Copiar link</button>
+                    {project.versions.length > 1 && (
+                      <button className="text-button" onClick={() => void rollbackProject(project)}>Voltar versão anterior</button>
+                    )}
+                    <button className="text-button" onClick={() => openConfig(project)}>
+                      {configFor === project.slug ? "Fechar configurações" : "Configurações do projeto"}
+                    </button>
+                  </div>
                 </div>
                 <div className="project-actions">
                   {project.activeVersion && <a className="button button-outline open-button" href={project.url} target="_blank" rel="noreferrer">Abrir <ArrowIcon /></a>}
@@ -659,11 +890,69 @@ export default function HospPage() {
                       {project.versions.filter((version) => version.version !== project.activeVersion).map((version) => (
                         <option key={version.version} value={version.version}>
                           {formatDate(version.publishedAt)} · {version.fileCount} arquivos
+                          {version.note ? " · " + version.note : ""}
+                          {(project.pinned ?? []).includes(version.version) ? " · fixada" : ""}
                         </option>
                       ))}
                     </select>
                     <button className="button button-outline" onClick={() => void restore(project)}>Restaurar versão</button>
+                    <button className="text-button" onClick={() => void togglePin(project, restoreVersion)}>
+                      {(project.pinned ?? []).includes(restoreVersion) ? "Soltar versão" : "Fixar versão"}
+                    </button>
                     <button className="text-button" onClick={() => setRestoreFor("")}>Cancelar</button>
+                  </div>
+                )}
+                {configFor === project.slug && config && (
+                  <div className="config-row">
+                    <label className="config-check">
+                      <input type="checkbox" checked={config.noindex} onChange={(event) => setConfig({ ...config, noindex: event.target.checked })} />
+                      <span>Não aparecer em buscas (noindex)</span>
+                    </label>
+                    <label className="config-check">
+                      <input type="checkbox" checked={config.spaFallback} onChange={(event) => setConfig({ ...config, spaFallback: event.target.checked })} />
+                      <span>Aplicativo de página única: rotas sem arquivo abrem a página inicial</span>
+                    </label>
+                    <div>
+                      <label className="field-label" htmlFor={"cache-" + project.slug}>Cache dos arquivos (segundos)</label>
+                      <input id={"cache-" + project.slug} className="field" type="number" min={0} max={31536000} inputMode="numeric"
+                        value={config.cacheSeconds} onChange={(event) => setConfig({ ...config, cacheSeconds: Number(event.target.value) })} />
+                    </div>
+                    <div>
+                      <label className="field-label" htmlFor={"nf-" + project.slug}>Página de erro 404 (arquivo HTML)</label>
+                      <input id={"nf-" + project.slug} className="field" value={config.notFound} placeholder="404.html"
+                        onChange={(event) => setConfig({ ...config, notFound: event.target.value })} />
+                    </div>
+                    <div className="config-wide">
+                      <label className="field-label" htmlFor={"redir-" + project.slug}>Redirecionamentos, um por linha</label>
+                      <textarea id={"redir-" + project.slug} className="field field-area" rows={3} spellCheck={false}
+                        placeholder="/antigo -> /novo 301&#10;/blog/* -> /artigos/:splat 302"
+                        value={redirectsText} onChange={(event) => setRedirectsText(event.target.value)} />
+                    </div>
+                    <div className="config-wide">
+                      <label className="field-label" htmlFor={"hdr-" + project.slug}>Cabeçalhos, um por linha</label>
+                      <textarea id={"hdr-" + project.slug} className="field field-area" rows={2} spellCheck={false}
+                        placeholder="Access-Control-Allow-Origin: *"
+                        value={headersText} onChange={(event) => setHeadersText(event.target.value)} />
+                    </div>
+                    <div className="config-wide">
+                      <label className="field-label" htmlFor={"alias-" + project.slug}>Apelidos (endereços antigos que redirecionam para este)</label>
+                      <div className="alias-line">
+                        {(project.aliases ?? []).map((alias) => (
+                          <span className="alias-chip" key={alias}>
+                            girofy.site/{alias}
+                            <button type="button" aria-label={"Remover apelido " + alias} onClick={() => void changeAlias(project, "alias_remove", alias)}>×</button>
+                          </span>
+                        ))}
+                        <input id={"alias-" + project.slug} className="field" value={aliasValue} placeholder="novo-apelido" maxLength={40}
+                          onChange={(event) => setAliasValue(slugify(event.target.value))} />
+                        <button className="button button-outline" type="button" disabled={!aliasValue}
+                          onClick={() => void changeAlias(project, "alias_add", aliasValue)}>Adicionar</button>
+                      </div>
+                    </div>
+                    <div className="config-actions">
+                      <button className="button button-light" onClick={() => void saveConfig(project)}>Salvar configurações</button>
+                      <button className="text-button" onClick={() => setConfigFor("")}>Cancelar</button>
+                    </div>
                   </div>
                 )}
               </article>
@@ -706,6 +995,24 @@ async function api<T = void>(path: string, init: RequestInit = {}): Promise<T> {
     throw new ApiError(message, reason);
   }
   return data as T;
+}
+
+function parseRedirects(text: string): Redirect[] {
+  return text.split("\n").map((line) => line.trim()).filter(Boolean).map((line) => {
+    const match = /^(\S+)\s*(?:->|=>)\s*(\S+)(?:\s+(\d{3}))?$/.exec(line);
+    if (!match) throw new Error("Redirecionamento inválido: “" + line + "”. Use /de -> /para 301");
+    return { from: match[1], to: match[2], status: match[3] ? Number(match[3]) : 301 };
+  });
+}
+
+function parseHeaders(text: string): Record<string, string> {
+  const headers: Record<string, string> = {};
+  for (const line of text.split("\n").map((item) => item.trim()).filter(Boolean)) {
+    const separator = line.indexOf(":");
+    if (separator < 1) throw new Error("Cabeçalho inválido: “" + line + "”. Use Nome: valor");
+    headers[line.slice(0, separator).trim()] = line.slice(separator + 1).trim();
+  }
+  return headers;
 }
 
 function normalizePath(value: string): string {
