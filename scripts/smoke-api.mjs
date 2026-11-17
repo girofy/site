@@ -5,13 +5,20 @@ import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { setTimeout as delay } from "node:timers/promises";
 import { zipSync, strToU8 } from "fflate";
 
-const base = "http://localhost:4174";
+// SMOKE_TARGET=standalone testa o Worker enxuto (npm run smoke:standalone). Sem ele, testa o Site completo.
+const standalone = process.env.SMOKE_TARGET === "standalone";
+const base = standalone ? "http://127.0.0.1:4174" : "http://localhost:4174";
 const devVarsPath = new URL("../.dev.vars", import.meta.url);
 const hadDevVars = existsSync(devVarsPath);
 const previousDevVars = hadDevVars ? readFileSync(devVarsPath, "utf8") : null;
 writeFileSync(devVarsPath, "HOSP_ADMIN_PASSWORD=smoke-test-key\n");
 
-const server = spawn(process.execPath, ["scripts/run-framework.mjs", "dev", "--port", "4174"], {
+const serverArgs = standalone
+  ? ["--import", "./scripts/sites-env.mjs", "node_modules/wrangler/bin/wrangler.js", "dev",
+    "--config", "wrangler.standalone.jsonc", "--local", "--ip", "127.0.0.1", "--port", "4174",
+    "--inspector-port", "0", "--persist-to", ".wrangler/smoke-standalone"]
+  : ["scripts/run-framework.mjs", "dev", "--port", "4174"];
+const server = spawn(process.execPath, serverArgs, {
   cwd: new URL("..", import.meta.url),
   env: { ...process.env, HOSP_ADMIN_PASSWORD: "smoke-test-key" },
   stdio: "ignore"

@@ -129,3 +129,23 @@ Este MCP é diferente de `functions/mcp.js`, que é o endpoint público de leitu
 - `deploy_zip` por URL só aceita https público com nome de domínio, sem usuário, senha ou porta. O download e a leitura do ZIP têm limite de tamanho e de arquivos. A busca real em uma URL pública não foi exercitada nos testes locais, só as recusas.
 - URLs limpas: `/projeto/sobre` abre `sobre.html` ou `sobre/index.html`, e `/projeto/sobre/` abre `sobre/index.html`. Antes essas rotas caíam na página inicial.
 - A leitura de `active.json` agora inclui as configurações, então servir um site continua exigindo uma leitura do R2. Apelidos e prévias adicionam uma leitura só quando o endereço não é um projeto ativo.
+
+## Worker enxuto em `hosting.girofy.site`
+
+Além do Worker do Site (vinext, painel visual e páginas institucionais), existe um Worker só da hospedagem: `build/standalone-worker.ts`. Ele tem a API REST, o MCP e serve os sites publicados, sem painel visual. Reaproveita `lib/hosp/` e `lib/hosp/serve.ts`, então o comportamento é o mesmo (`npm run smoke:standalone` repete as 90 verificações nele).
+
+Estado em 17/11/2026, na conta Cloudflare que tem a zona `girofy.site`:
+
+- Worker `girofy-hosting` publicado (59.458 bytes, checksum conferido contra o build local) e rota `hosting.girofy.site/*`. Também responde em `girofy-hosting.jlzin2603.workers.dev`.
+- **Falta o R2 e a chave.** Sem o binding `BUCKET` a API responde 503 ("armazenamento ainda não está disponível"), e sem `HOSP_ADMIN_PASSWORD` responde `admin_key_not_configured`. O R2 estava desligado na conta (erro 10042) e só o dono da conta consegue ligar.
+- Nenhum registro DNS foi criado ou alterado. O `*.girofy.site` já é um CNAME proxied e cobre o subdomínio. Nenhuma rota existente foi tocada.
+- O nome `host.girofy.site` **não foi usado de propósito**: o `girofy-subdomain-router` manda esse endereço para o painel atual em `girofy.site/hosp`.
+
+Para concluir depois que o R2 estiver ligado:
+
+1. Criar o bucket `girofy-hosting` no R2.
+2. Adicionar o binding `BUCKET` ao Worker `girofy-hosting`.
+3. Definir o segredo `HOSP_ADMIN_PASSWORD`.
+4. Entrar por `POST /api/hosp` com `{"action":"login","key":"..."}` (com cabeçalho `Origin` igual ao do endereço) e criar o primeiro token com `token_create`.
+
+Para publicar de novo a partir do repositório: `npm run build:standalone` e `npx wrangler deploy -c wrangler.standalone.jsonc` (exige `CLOUDFLARE_API_TOKEN` e `HOSP_ADMIN_PASSWORD` já definido no Worker). O painel visual continua no Worker do Site.
