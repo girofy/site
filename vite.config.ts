@@ -20,7 +20,9 @@ export default defineConfig(async () => {
         config: {
           main: "./build/sites-worker.ts",
           compatibility_flags: ["nodejs_compat"],
-          r2_buckets: r2 ? [{ binding: r2, bucket_name: "site-creator-r2" }] : []
+          // No Site oficial o bucket é gerenciado e se chama site-creator-r2. Para publicar numa conta
+          // Cloudflare própria, defina HOSP_R2_BUCKET com o nome do bucket criado nela.
+          r2_buckets: r2 ? [{ binding: r2, bucket_name: process.env.HOSP_R2_BUCKET || "site-creator-r2" }] : []
         }
       })
     ]

@@ -225,3 +225,43 @@ svg { display: block; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* API, agentes e gerenciamento de projeto */
+.project-tools { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; }
+.project-tools .text-button { min-height: 32px; padding: 5px 0; }
+.field-area { height: auto; min-height: 76px; padding: 12px 14px; font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; resize: vertical; }
+.config-row { grid-column: 2 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; padding: 18px; background: #111; border: 1px solid #292929; }
+.config-row .config-wide, .config-row .config-check, .config-row .config-actions { grid-column: 1 / -1; }
+.config-check { display: flex; align-items: center; gap: 10px; min-height: 40px; color: #c8c8c8; font-size: 12px; cursor: pointer; }
+.config-check input { width: 20px; height: 20px; flex: none; accent-color: #fff; }
+.config-actions { display: flex; align-items: center; gap: 16px; }
+.alias-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.alias-line .field { width: auto; min-width: 180px; flex: 1; height: 44px; }
+.alias-chip { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 6px 0 12px; color: #d0d0d0; font-size: 11px; background: #1b1b1b; border: 1px solid #3a3a3a; border-radius: 999px; }
+.alias-chip button { width: 28px; height: 28px; color: #aaa; font-size: 18px; line-height: 1; background: transparent; border: 0; cursor: pointer; }
+.agent-panel { grid-column: 1 / -1; display: grid; grid-template-columns: .9fr 1.1fr; gap: 28px 40px; padding-top: 26px; border-top: 1px solid #292929; }
+.agent-panel h3 { margin: 10px 0 8px; font-size: 18px; letter-spacing: -.03em; }
+.agent-panel p:not(.eyebrow) { max-width: 420px; margin-bottom: 18px; color: #999; font-size: 12px; line-height: 1.6; }
+.agent-panel code { padding: 1px 5px; color: #ddd; background: #1d1d1d; border-radius: 4px; font-size: 11px; }
+.copy-line { display: flex; gap: 8px; align-items: stretch; }
+.copy-line .field { min-width: 0; flex: 1; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.copy-line .button { flex: none; min-height: 52px; }
+.token-secret { display: grid; gap: 10px; margin-bottom: 20px; padding: 16px; background: #171717; border: 1px solid #5a5a5a; }
+.token-secret strong { font-size: 12px; }
+.token-form { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; align-items: end; }
+.token-form > button { grid-column: 1 / -1; min-height: 52px; }
+.token-list { display: grid; gap: 1px; margin: 20px 0 0; padding: 0; list-style: none; background: #292929; border: 1px solid #292929; }
+.token-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; background: #111; }
+.token-list strong { display: block; font-size: 12px; }
+.token-list span { color: #8f8f8f; font-size: 10px; line-height: 1.6; }
+
+@media (max-width: 820px) {
+  .config-row { grid-column: 1 / -1; grid-template-columns: 1fr; }
+  .agent-panel { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .token-form { grid-template-columns: 1fr; }
+  .copy-line { flex-direction: column; }
+  .copy-line .button { width: 100%; }
+  .project-tools .text-button { min-height: 44px; }
+}
