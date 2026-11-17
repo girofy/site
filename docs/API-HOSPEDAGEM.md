@@ -82,7 +82,7 @@ curl -X POST https://girofy.site/api/hosp -H "Authorization: Bearer $T" \
 | `files`, `file` | read | Lista os arquivos de uma versão e lê um arquivo de texto (até 200 KB). |
 | `usage` | read | Projetos, versões, bytes guardados e limites restantes. |
 | `activity` | read | Últimas ações: quem, o quê, quando. |
-| `deploy` | deploy | Cria/atualiza em uma chamada (até 40 arquivos e 8 MB). |
+| `deploy` | deploy | Cria/atualiza em uma chamada (até 30 arquivos e 8 MB). |
 | `deploy_zip` | deploy | Publica um ZIP vindo de `zipUrl` (https público) ou `zipBase64`. Remove a pasta raiz comum e ignora `.env`, chaves e `__MACOSX`. |
 | `begin`, `upload_files`, `publish` | deploy | Envio em lotes para sites maiores. `publish` aceita `note` e `activate`. |
 | `restore` | deploy | Coloca uma versão guardada no ar (também promove uma prévia). |
@@ -124,7 +124,7 @@ Este MCP é diferente de `functions/mcp.js`, que é o endpoint público de leitu
 ## Limites e cuidados
 
 - Mantidos: 50 MB e 500 arquivos por publicação, 10 MB por arquivo, 50 projetos, 12 versões livres por projeto (fixadas ficam fora dessa conta, até 5).
-- Cada chamada de lote aceita 40 arquivos e 8 MB (`LIMITS.maxBatchFiles` e `maxBatchBytes` em `lib/hosp/core.ts`). O número de 40 é uma escolha conservadora para o limite de subrequisições de um Worker. Não foi medido no ambiente de produção real e pode ser ajustado depois de medir.
+- Cada chamada de lote aceita 30 arquivos e 8 MB (`LIMITS.maxBatchFiles` e `maxBatchBytes` em `lib/hosp/core.ts`). Cada arquivo é uma operação de armazenamento e uma publicação gasta ~15 operações de controle, então 30 cabe no limite de 50 subrequisições de um Worker no plano grátis. Pode ser aumentado numa conta paga depois de medir.
 - Um MCP recebe argumentos escritos pelo modelo, então envio de binários grandes por `base64` não é prático. Para isso use `hosp_publicar_zip_url` (o agente publica o ZIP em uma URL pública) ou a API REST com `multipart`.
 - `deploy_zip` por URL só aceita https público com nome de domínio, sem usuário, senha ou porta. O download e a leitura do ZIP têm limite de tamanho e de arquivos. A busca real em uma URL pública não foi exercitada nos testes locais, só as recusas.
 - URLs limpas: `/projeto/sobre` abre `sobre.html` ou `sobre/index.html`, e `/projeto/sobre/` abre `sobre/index.html`. Antes essas rotas caíam na página inicial.
@@ -132,20 +132,34 @@ Este MCP é diferente de `functions/mcp.js`, que é o endpoint público de leitu
 
 ## Worker enxuto em `hosting.girofy.site`
 
-Além do Worker do Site (vinext, painel visual e páginas institucionais), existe um Worker só da hospedagem: `build/standalone-worker.ts`. Ele tem a API REST, o MCP e serve os sites publicados, sem painel visual. Reaproveita `lib/hosp/` e `lib/hosp/serve.ts`, então o comportamento é o mesmo (`npm run smoke:standalone` repete as 90 verificações nele).
+Além do Worker do Site (vinext e páginas institucionais), existe um Worker só da hospedagem: `build/standalone-worker.ts`. Ele tem o **painel visual**, a API REST, o MCP e serve os sites publicados, sem vinext. Reaproveita `lib/hosp/` e `lib/hosp/serve.ts`, então o comportamento é o mesmo. O painel é empacotado e embutido no Worker (módulo virtual `panel-assets:bundle`), sem upload de arquivos estáticos.
 
 Estado em 17/11/2026, na conta Cloudflare que tem a zona `girofy.site`:
 
-- Worker `girofy-hosting` publicado (59.458 bytes, checksum conferido contra o build local) e rota `hosting.girofy.site/*`. Também responde em `girofy-hosting.jlzin2603.workers.dev`.
-- **Falta o R2 e a chave.** Sem o binding `BUCKET` a API responde 503 ("armazenamento ainda não está disponível"), e sem `HOSP_ADMIN_PASSWORD` responde `admin_key_not_configured`. O R2 estava desligado na conta (erro 10042) e só o dono da conta consegue ligar.
+- Worker `girofy-hosting` no ar em `https://hosting.girofy.site/hosp` (rota `hosting.girofy.site/*`) e em `girofy-hosting.jlzin2603.workers.dev`. A raiz `/` leva ao painel.
+- **Armazenamento em KV** (namespace `girofy-hosting`, binding `HOSP_KV`), porque o R2 não estava ligado na conta (erro 10042: só o dono liga, no painel). O código usa R2 quando existir o binding `BUCKET` e KV quando só existir `HOSP_KV` (`lib/hosp/storage.ts`).
+- Segredo `HOSP_ADMIN_PASSWORD` definido no Worker. Ele não está no repositório.
 - Nenhum registro DNS foi criado ou alterado. O `*.girofy.site` já é um CNAME proxied e cobre o subdomínio. Nenhuma rota existente foi tocada.
 - O nome `host.girofy.site` **não foi usado de propósito**: o `girofy-subdomain-router` manda esse endereço para o painel atual em `girofy.site/hosp`.
+- Verificado em produção: login, criação de token, deploy por MCP, atualização, voltar versão, pasta com `index.html`, revogar token e a tela em desktop e celular (390 px).
 
-Para concluir depois que o R2 estiver ligado:
+### Limites do KV (diferenças em relação ao R2)
 
-1. Criar o bucket `girofy-hosting` no R2.
-2. Adicionar o binding `BUCKET` ao Worker `girofy-hosting`.
-3. Definir o segredo `HOSP_ADMIN_PASSWORD`.
-4. Entrar por `POST /api/hosp` com `{"action":"login","key":"..."}` (com cabeçalho `Origin` igual ao do endereço) e criar o primeiro token com `token_create`.
+- **Plano grátis: 1.000 gravações por dia.** Cada arquivo é uma gravação, e apagar também conta. Uma publicação gasta os arquivos mais ~15 operações de controle, então dá para fazer algumas dezenas de publicações pequenas por dia.
+- **1 gravação por segundo na mesma chave.** O adaptador tenta de novo quando o KV recusa.
+- **Consistência eventual.** Uma versão nova pode levar até cerca de 1 minuto para aparecer em todas as regiões. Nos testes em produção apareceu na hora.
+- **Chaves de até 512 bytes.** Caminhos de arquivo muito longos são recusados (`path_too_long`). Valores de até 25 MB, e o limite de 10 MB por arquivo continua.
+- **Subrequisições.** Um Worker no plano grátis faz até 50 operações por chamada. Por isso cada chamada aceita 30 arquivos.
+- Os projetos ficam num índice (`_system/projects-index.json`), para listar sem varrer todas as chaves. Num armazenamento antigo sem índice, ele é reconstruído na primeira listagem.
 
-Para publicar de novo a partir do repositório: `npm run build:standalone` e `npx wrangler deploy -c wrangler.standalone.jsonc` (exige `CLOUDFLARE_API_TOKEN` e `HOSP_ADMIN_PASSWORD` já definido no Worker). O painel visual continua no Worker do Site.
+Para trocar para R2 depois: ligar o R2, criar o bucket, trocar `kv_namespaces` por `r2_buckets` em `wrangler.standalone.jsonc` e publicar de novo. Os dados do KV não migram sozinhos.
+
+### Publicar de novo
+
+```bash
+npm run build:standalone
+CLOUDFLARE_API_TOKEN=... CLOUDFLARE_ACCOUNT_ID=... \
+  npx wrangler deploy -c wrangler.standalone.jsonc
+```
+
+Para trocar a chave de acesso: `npx wrangler secret put HOSP_ADMIN_PASSWORD -c wrangler.standalone.jsonc`. O segredo continua entre os deploys.

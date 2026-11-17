@@ -360,7 +360,7 @@ export default function HospPage() {
       setNote("");
       setSlug("");
       setSlugEdited(false);
-      setMessage("Publicado. Seu site está no ar em girofy.site/" + result.project.slug);
+      setMessage("Publicado. Seu site está no ar em " + siteHost + "/" + result.project.slug);
       if (zipInput.current) zipInput.current.value = "";
       if (filesInput.current) filesInput.current.value = "";
       if (folderInput.current) folderInput.current.value = "";
@@ -440,6 +440,7 @@ export default function HospPage() {
   }, []);
 
   useEffect(() => { setOrigin(window.location.origin); }, []);
+  const siteHost = origin ? origin.replace(/^https?:\/\//, "") : "girofy.site";
   useEffect(() => { if (settingsOpen && auth === "ready") void loadTokens(); }, [settingsOpen, auth, loadTokens]);
 
   async function createToken(event: React.FormEvent<HTMLFormElement>) {
@@ -615,7 +616,7 @@ export default function HospPage() {
         <div className="hero-note">
           <span className="status-dot"></span>
           <span>PUBLICAÇÃO ESTÁTICA</span>
-          <p>Seu site fica disponível em um endereço simples dentro de girofy.site.</p>
+          <p>Seu site fica disponível em um endereço simples dentro de {siteHost}.</p>
         </div>
       </section>
 
@@ -787,7 +788,7 @@ export default function HospPage() {
 
             <label className="field-label" htmlFor="project-slug">Endereço do site</label>
             <div className="slug-field">
-              <span>girofy.site/</span>
+              <span>{siteHost}/</span>
               <input id="project-slug" value={slug} onChange={(event) => {
                 setSlugEdited(true);
                 setSlug(slugify(event.target.value));
@@ -850,7 +851,7 @@ export default function HospPage() {
                     </form>
                   ) : <h3>{project.name}</h3>}
                   <a className="project-url" href={project.url} target="_blank" rel="noreferrer">
-                    girofy.site/{project.slug} <ExternalIcon />
+                    {siteHost}/{project.slug} <ExternalIcon />
                   </a>
                   <div className="project-meta">
                     <span className={"project-status" + (project.activeVersion ? "" : " is-draft")}>
@@ -939,7 +940,7 @@ export default function HospPage() {
                       <div className="alias-line">
                         {(project.aliases ?? []).map((alias) => (
                           <span className="alias-chip" key={alias}>
-                            girofy.site/{alias}
+                            {siteHost}/{alias}
                             <button type="button" aria-label={"Remover apelido " + alias} onClick={() => void changeAlias(project, "alias_remove", alias)}>×</button>
                           </span>
                         ))}

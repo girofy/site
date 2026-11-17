@@ -5,10 +5,12 @@
 
 import { env } from "cloudflare:workers";
 import { execute } from "../../../../lib/hosp/api";
+import { LIMITS } from "../../../../lib/hosp/core";
 import {
   SCOPE_RANK, authenticateToken, bearerFrom, type Actor, type Scope
 } from "../../../../lib/hosp/auth";
 import { HospError } from "../../../../lib/hosp/errors";
+import { hospStorage } from "../../../../lib/hosp/storage";
 
 const SUPPORTED_PROTOCOLS = ["2025-06-18", "2025-03-26", "2024-11-05"];
 const MAX_BODY_BYTES = 14 * 1024 * 1024;
@@ -29,7 +31,7 @@ const versionProp = { type: "string", description: "ID da versão (32 caracteres
 const noteProp = { type: "string", maxLength: 200, description: "Mensagem curta que descreve a mudança. Fica salva na versão." };
 const activateProp = { type: "boolean", description: "false publica sem ativar: o site continua igual e você revisa pela previewPath antes de ativar." };
 const filesProp = {
-  type: "array", maxItems: 40,
+  type: "array", maxItems: LIMITS.maxBatchFiles,
   description: "Arquivos da publicação. Cada um tem path e exatamente um de: text (texto) ou base64 (binário).",
   items: {
     type: "object",
@@ -76,7 +78,7 @@ const TOOLS: Tool[] = [
   },
   {
     name: "hosp_publicar_arquivos", action: "deploy", scope: "deploy",
-    description: "Cria ou atualiza um projeto numa só chamada, com até 40 arquivos e 8 MB. Se o projeto já existe, cria uma nova versão e guarda a anterior para voltar depois. Sites maiores: use iniciar_envio, enviar_lote e concluir_envio.",
+    description: "Cria ou atualiza um projeto numa só chamada, com até " + LIMITS.maxBatchFiles + " arquivos e 8 MB. Se o projeto já existe, cria uma nova versão e guarda a anterior para voltar depois. Sites maiores: use iniciar_envio, enviar_lote e concluir_envio.",
     properties: {
       slug: slugProp, name: { type: "string", maxLength: 60 },
       entry: { type: "string", description: "Página inicial (padrão: index.html)." },
@@ -86,7 +88,7 @@ const TOOLS: Tool[] = [
   },
   {
     name: "hosp_publicar_zip_url", action: "deploy_zip", scope: "deploy",
-    description: "Baixa um ZIP de uma URL https pública e publica o conteúdo (até 40 arquivos por chamada). Remove a pasta raiz comum e ignora arquivos protegidos como .env.",
+    description: "Baixa um ZIP de uma URL https pública e publica o conteúdo (até " + LIMITS.maxBatchFiles + " arquivos por chamada). Remove a pasta raiz comum e ignora arquivos protegidos como .env.",
     properties: {
       slug: slugProp, zipUrl: { type: "string", description: "URL https pública do ZIP." },
       root: { type: "string", description: "Pasta dentro do ZIP a publicar, por exemplo dist." },
@@ -102,7 +104,7 @@ const TOOLS: Tool[] = [
   },
   {
     name: "hosp_enviar_lote", action: "upload_files", scope: "deploy",
-    description: "Envia um lote de até 40 arquivos (8 MB) para um envio iniciado.",
+    description: "Envia um lote de até " + LIMITS.maxBatchFiles + " arquivos (8 MB) para um envio iniciado.",
     properties: { slug: slugProp, version: versionProp, files: filesProp }, required: ["slug", "version", "files"]
   },
   {
@@ -185,7 +187,7 @@ export async function POST(request: Request): Promise<Response> {
   if (origin && origin !== new URL(request.url).origin) {
     return plain({ error: "Origem não permitida." }, 403);
   }
-  const bucket = env.BUCKET;
+  const bucket = hospStorage(env);
   if (!bucket) return plain({ error: "O armazenamento ainda não está disponível." }, 503);
 
   const bearer = bearerFrom(request);

@@ -93,10 +93,24 @@ try {
   let ready = false;
   for (let attempt = 0; attempt < 60; attempt += 1) {
     if (server.exitCode !== null) throw new Error("O servidor local encerrou antes de ficar pronto.");
-    try { if ((await request("/")).ok) { ready = true; break; } } catch {}
+    try { if ((await request("/")).status < 500) { ready = true; break; } } catch {}
     await delay(500);
   }
   if (!ready) throw new Error("O servidor local não iniciou em " + base);
+
+  // ---- Worker enxuto: a tela do painel vem de arquivos estáticos ----
+  if (standalone) {
+    const root = await request("/");
+    expect(root.status === 302 && root.headers.get("location") === base + "/hosp", "/ leva ao painel");
+    const shell = await request("/hosp");
+    const shellHtml = await shell.text();
+    expect(shell.status === 200 && shellHtml.includes("id=\"root\"") && shellHtml.includes("/hosp-assets/panel.js"),
+      "página do painel serve o carregador");
+    expect(shell.headers.get("content-security-policy")?.includes("frame-ancestors 'none'"), "painel com CSP restrita");
+    const script = await request("/hosp-assets/panel.js");
+    expect(script.status === 200 && (await script.text()).length > 100000, "painel.js servido como arquivo estático");
+    expect((await request("/hosp-assets/panel.css")).status === 200, "painel.css servido");
+  }
 
   // ---- entrada pelo painel e criação de tokens ----
   const login = await request("/api/hosp", {
@@ -289,8 +303,8 @@ try {
     slug: slugBatch, files: [{ path: ".env", text: "SEGREDO=1" }]
   })).isError, "arquivo .env recusado");
   expect((await tool(deployToken, "hosp_publicar_arquivos", {
-    slug: slugBatch, files: Array.from({ length: 41 }, (_, index) => ({ path: "f" + index + ".txt", text: "x" }))
-  })).isError, "mais de 40 arquivos numa chamada recusado");
+    slug: slugBatch, files: Array.from({ length: 31 }, (_, index) => ({ path: "f" + index + ".txt", text: "x" }))
+  })).isError, "mais de 30 arquivos numa chamada recusado");
 
   // ---- ZIP (base64 pela REST; a URL usa o mesmo caminho depois do download) ----
   const zip = zipSync({

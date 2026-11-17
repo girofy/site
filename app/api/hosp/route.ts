@@ -6,6 +6,7 @@ import {
 } from "../../../lib/hosp/auth";
 import { storeUploadedFile } from "../../../lib/hosp/core";
 import { HospError } from "../../../lib/hosp/errors";
+import { hospStorage } from "../../../lib/hosp/storage";
 
 const SESSION_ACTOR: Actor = { kind: "session", name: "painel", scope: "admin" };
 const READ_ONLY_ACTIONS = new Set([
@@ -14,7 +15,7 @@ const READ_ONLY_ACTIONS = new Set([
 
 export async function GET(request: Request): Promise<Response> {
   try {
-    const bucket = env.BUCKET;
+    const bucket = hospStorage(env);
     const auth = await authenticate(request, bucket);
     if (auth instanceof Response) return auth;
     const url = new URL(request.url);
@@ -47,7 +48,7 @@ export async function POST(request: Request): Promise<Response> {
       if (body.action === "logout") return logout(request);
     }
 
-    const bucket = env.BUCKET;
+    const bucket = hospStorage(env);
     const auth = await authenticate(request, bucket);
     if (auth instanceof Response) return auth;
 

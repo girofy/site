@@ -1,17 +1,19 @@
-// Worker enxuto da hospedagem Girofy: API REST, servidor MCP e os sites publicados, sem
-// vinext, sem páginas institucionais e sem o painel visual (esse continua no Worker do Site).
-// Serve para rodar a hospedagem num subdomínio da própria conta Cloudflare, por exemplo
-// hosting.girofy.site, usando as mesmas funções de lib/hosp.
+// Worker enxuto da hospedagem Girofy: painel visual, API REST, servidor MCP e os sites
+// publicados, sem vinext e sem as páginas institucionais. Serve para rodar a hospedagem num
+// subdomínio da própria conta Cloudflare, por exemplo hosting.girofy.site, usando as mesmas
+// funções de lib/hosp. Guarda os arquivos em R2 (BUCKET) ou, sem cartão, em KV (HOSP_KV).
 
+import { panelCss, panelJs, panelVersion } from "panel-assets:bundle";
 import * as rest from "../app/api/hosp/route";
 import * as mcp from "../app/api/hosp/mcp/route";
 import { serveHostedSite } from "../lib/hosp/serve";
+import { hospStorage } from "../lib/hosp/storage";
 
 type Handler = (request: Request) => Promise<Response>;
 type Handlers = Partial<Record<"GET" | "POST" | "DELETE", Handler>>;
 
 // Caminhos que nunca são tratados como endereço de projeto.
-const reservedPaths = new Set(["api", "hosp", "assets", "projects", "favicon.png", "robots.txt"]);
+const reservedPaths = new Set(["api", "hosp", "hosp-assets", "assets", "projects", "favicon.png", "robots.txt"]);
 
 export default {
   async fetch(request: Request, env: Cloudflare.Env): Promise<Response> {
@@ -20,12 +22,16 @@ export default {
     if (url.pathname === "/api/hosp/mcp") return dispatch(mcp, request);
     if (url.pathname === "/api/hosp") return dispatch(rest, request);
 
-    if (env.BUCKET && (request.method === "GET" || request.method === "HEAD")) {
-      const hosted = await serveHostedSite(request, env.BUCKET, reservedPaths);
+    if (url.pathname === "/") return Response.redirect(new URL("/hosp", url.origin), 302);
+    if (url.pathname === "/hosp" || url.pathname === "/hosp/") return panelShell();
+    if (url.pathname === "/hosp-assets/panel.js") return panelAsset(panelJs, "text/javascript; charset=utf-8");
+    if (url.pathname === "/hosp-assets/panel.css") return panelAsset(panelCss, "text/css; charset=utf-8");
+
+    const storage = hospStorage(env);
+    if (storage && (request.method === "GET" || request.method === "HEAD")) {
+      const hosted = await serveHostedSite(request, storage, reservedPaths);
       if (hosted) return hosted;
     }
-
-    if (url.pathname === "/" || url.pathname === "/hosp") return landing();
     return new Response("Not found", { status: 404, headers: { "Content-Type": "text/plain; charset=utf-8" } });
   }
 };
@@ -37,25 +43,37 @@ function dispatch(handlers: Handlers, request: Request): Promise<Response> | Res
   return new Response("Method not allowed", { status: 405, headers: { Allow: allowed } });
 }
 
-function landing(): Response {
-  const page = "<!doctype html><html lang=\"pt-BR\"><meta charset=\"utf-8\">" +
-    "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"robots\" content=\"noindex\">" +
-    "<title>Girofy · Hospedagem</title><style>" +
-    "body{font:16px/1.6 system-ui;margin:0;background:#090909;color:#fff;padding:clamp(24px,7vw,96px)}" +
-    "main{max-width:760px;margin:auto}h1{font-size:clamp(34px,7vw,64px);letter-spacing:-.05em;margin:.2em 0}" +
-    "p{color:#aaa}code{background:#1a1a1a;padding:2px 7px;border-radius:5px;color:#e8e8e8}" +
-    ".tag{font-size:11px;letter-spacing:.16em;color:#888}</style><main>" +
-    "<p class=\"tag\">GIROFY / HOSPEDAGEM</p><h1>Hospedagem para agentes.</h1>" +
-    "<p>API REST em <code>/api/hosp</code> e servidor MCP em <code>/api/hosp/mcp</code>. " +
-    "Use um token no cabeçalho <code>Authorization: Bearer</code>.</p>" +
-    "<p>Os sites publicados ficam em <code>/{endereço}/</code>. Esta versão não inclui o painel visual.</p>" +
-    "</main></html>";
+/** Painel empacotado dentro do Worker. A URL leva a versão, então o cache longo é seguro. */
+function panelAsset(body: string, contentType: string): Response {
+  return new Response(body, {
+    headers: {
+      "Content-Type": contentType,
+      "Cache-Control": "public, max-age=31536000, immutable",
+      "X-Content-Type-Options": "nosniff"
+    }
+  });
+}
+
+/** Página que carrega o painel (código e estilos embutidos no Worker). */
+function panelShell(): Response {
+  const page = "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\">" +
+    "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1,viewport-fit=cover\">" +
+    "<meta name=\"robots\" content=\"noindex,nofollow\"><meta name=\"color-scheme\" content=\"dark\">" +
+    "<title>Hospedagem | Girofy</title>" +
+    "<link rel=\"stylesheet\" href=\"/hosp-assets/panel.css?v=" + panelVersion + "\"></head>" +
+    "<body><div id=\"root\"></div><script src=\"/hosp-assets/panel.js?v=" + panelVersion + "\"></script></body></html>";
   return new Response(page, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "no-store",
       "X-Content-Type-Options": "nosniff",
-      "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; frame-ancestors 'none'"
+      "X-Frame-Options": "DENY",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
+      "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+      "Content-Security-Policy":
+        "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; " +
+        "img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; " +
+        "object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
     }
   });
 }

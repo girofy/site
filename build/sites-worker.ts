@@ -1,9 +1,11 @@
 import handler from "vinext/server/fetch-handler";
 import { serveHostedSite } from "../lib/hosp/serve";
+import { hospStorage } from "../lib/hosp/storage";
 
 type SiteEnv = Cloudflare.Env & {
   ASSETS?: Fetcher;
   BUCKET?: R2Bucket;
+  HOSP_KV?: KVNamespace;
 };
 
 const reservedPaths = new Set([
@@ -31,8 +33,9 @@ export default {
       return response;
     }
 
-    if (env.BUCKET && (request.method === "GET" || request.method === "HEAD")) {
-      const hosted = await serveHostedSite(request, env.BUCKET, reservedPaths);
+    const storage = hospStorage(env);
+    if (storage && (request.method === "GET" || request.method === "HEAD")) {
+      const hosted = await serveHostedSite(request, storage, reservedPaths);
       if (hosted) return hosted;
     }
 

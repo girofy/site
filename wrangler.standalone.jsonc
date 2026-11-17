@@ -1,12 +1,17 @@
 {
-  // Hospedagem Girofy enxuta (API, MCP e sites publicados) para uma conta Cloudflare própria.
-  // Build: npm run build:standalone. Deploy: npx wrangler deploy -c wrangler.standalone.jsonc
-  // Segredo necessário: HOSP_ADMIN_PASSWORD (npx wrangler secret put HOSP_ADMIN_PASSWORD -c wrangler.standalone.jsonc)
+  // Hospedagem Girofy enxuta (painel, API, MCP e sites publicados) para uma conta Cloudflare própria.
+  // Build:  npm run build:standalone
+  // Deploy: npx wrangler deploy -c wrangler.standalone.jsonc
+  // Segredo: npx wrangler secret put HOSP_ADMIN_PASSWORD -c wrangler.standalone.jsonc
+  //
+  // Armazenamento: KV (grátis, sem cartão). Para usar R2, crie o bucket, troque o bloco kv_namespaces
+  // por: "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "girofy-hosting" }]
   "name": "girofy-hosting",
   "main": "dist-standalone/worker.js",
   "compatibility_date": "2026-05-15",
   "workers_dev": true,
-  "r2_buckets": [{ "binding": "BUCKET", "bucket_name": "girofy-hosting" }],
+  "preview_urls": false,
+  "kv_namespaces": [{ "binding": "HOSP_KV", "id": "7c40b6a6d3ba40549931d2f732b67ff8" }],
   "routes": [{ "pattern": "hosting.girofy.site/*", "zone_name": "girofy.site" }],
   "observability": { "enabled": true }
 }

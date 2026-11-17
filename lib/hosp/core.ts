@@ -18,6 +18,7 @@ import {
 export const PREFIX = "projects/";
 const ALIAS_PREFIX = "aliases/";
 const AUDIT_PREFIX = "_system/audit/";
+const INDEX_KEY = "_system/projects-index.json";
 
 export const LIMITS = {
   maxFiles: 500,
@@ -27,10 +28,11 @@ export const LIMITS = {
   keepVersions: 12,
   maxPinned: 5,
   maxAliases: 10,
-  // Cada arquivo é uma gravação no R2 dentro de uma única chamada. Mantemos o lote
-  // pequeno para respeitar o limite de subrequisições do Worker. Para sites maiores,
-  // envie em lotes (begin → upload_files várias vezes → publish).
-  maxBatchFiles: 40,
+  // Cada arquivo é uma gravação no armazenamento dentro de uma única chamada, e uma publicação
+  // gasta mais ~15 operações de controle. Mantemos o lote pequeno para caber no limite de
+  // subrequisições de um Worker no plano grátis (50). Para sites maiores, envie em lotes
+  // (begin → upload_files várias vezes → publish).
+  maxBatchFiles: 30,
   maxBatchBytes: 8 * 1024 * 1024,
   maxNoteChars: 200,
   maxReadBytes: 200 * 1024
@@ -66,6 +68,8 @@ export type ProjectRecord = {
   activeVersion: string | null;
   entry: string | null;
   versions: VersionSummary[];
+  /** Quando a versão atual entrou no ar (publicação ou restauração). */
+  activatedAt?: string;
   pinned?: string[];
   aliases?: string[];
   settings?: ProjectSettings;
@@ -91,13 +95,11 @@ type DecodedFile = { path: string; bytes: Uint8Array; contentType: string };
 // ---------- leitura ----------
 
 export async function listProjects(bucket: R2Bucket): Promise<Array<Record<string, unknown>>> {
-  const result = await bucket.list({ prefix: PREFIX, delimiter: "/", limit: 1000 });
   const projects: Array<Record<string, unknown>> = [];
-  for (const projectPrefix of result.delimitedPrefixes) {
-    const slug = projectPrefix.slice(PREFIX.length).replace(/\/$/, "");
+  for (const slug of await projectSlugs(bucket)) {
     const project = await readProject(bucket, slug);
     if (!project) continue;
-    const active = project.activeVersion ? await readActive(bucket, slug) : null;
+    const active = project.versions?.find((item) => item.version === project.activeVersion) ?? null;
     projects.push({
       slug: project.slug,
       name: project.name,
@@ -106,7 +108,7 @@ export async function listProjects(bucket: R2Bucket): Promise<Array<Record<strin
       updatedAt: project.updatedAt,
       activeVersion: project.activeVersion,
       entry: project.entry,
-      publishedAt: active?.publishedAt ?? null,
+      publishedAt: project.activatedAt ?? active?.publishedAt ?? null,
       fileCount: active?.fileCount ?? 0,
       totalBytes: active?.totalBytes ?? 0,
       note: active?.note ?? null,
@@ -123,7 +125,7 @@ export async function listProjects(bucket: R2Bucket): Promise<Array<Record<strin
 export async function getProject(bucket: R2Bucket, slugInput: string): Promise<Record<string, unknown>> {
   const slug = requireSlug(slugInput);
   const project = await requireProject(bucket, slug);
-  const active = project.activeVersion ? await readActive(bucket, slug) : null;
+  const active = project.versions?.find((item) => item.version === project.activeVersion) ?? null;
   return {
     slug: project.slug,
     name: project.name,
@@ -132,7 +134,7 @@ export async function getProject(bucket: R2Bucket, slugInput: string): Promise<R
     updatedAt: project.updatedAt,
     activeVersion: project.activeVersion,
     entry: project.entry,
-    publishedAt: active?.publishedAt ?? null,
+    publishedAt: project.activatedAt ?? active?.publishedAt ?? null,
     fileCount: active?.fileCount ?? 0,
     totalBytes: active?.totalBytes ?? 0,
     pinned: project.pinned ?? [],
@@ -265,12 +267,14 @@ export async function beginDeploy(
     if (await bucket.head(aliasKey(slug))) {
       throw new HospError(409, "Esse endereço é um apelido de outro projeto. Remova o apelido antes de usá-lo.");
     }
-    const listing = await bucket.list({ prefix: PREFIX, delimiter: "/", limit: LIMITS.maxProjects + 1 });
-    if (listing.delimitedPrefixes.length >= LIMITS.maxProjects) {
+    const slugs = await projectSlugs(bucket);
+    if (slugs.length >= LIMITS.maxProjects) {
       throw new HospError(400, "O limite deste painel é de 50 projetos.");
     }
     const now = new Date().toISOString();
     project = { slug, name, createdAt: now, updatedAt: now, activeVersion: null, entry: null, versions: [] };
+    await writeProject(bucket, project);
+    await writeIndex(bucket, [...slugs.filter((item) => item !== slug), slug]);
   }
 
   const version = crypto.randomUUID().replace(/-/g, "");
@@ -278,7 +282,6 @@ export async function beginDeploy(
   await bucket.put(versionStateKey(slug, version), JSON.stringify(pending), {
     httpMetadata: { contentType: "application/json; charset=utf-8" }
   });
-  await writeProject(bucket, project);
   return {
     version,
     maxFileBytes: LIMITS.maxFileBytes,
@@ -403,6 +406,7 @@ export async function publishVersion(
     updatedAt: publishedAt,
     activeVersion: activate ? version : project.activeVersion,
     entry: activate ? entry : project.entry,
+    activatedAt: activate ? publishedAt : project.activatedAt,
     versions
   };
 
@@ -559,6 +563,7 @@ export async function activateVersion(
   project.activeVersion = version;
   project.entry = selected.entry;
   project.updatedAt = publishedAt;
+  project.activatedAt = publishedAt;
   project.versions = [
     selected,
     ...(project.versions ?? []).filter((item) => item.version !== version)
@@ -689,6 +694,8 @@ export async function deleteProject(bucket: R2Bucket, slugInput: string): Promis
   if (!project && !keys.length) throw new HospError(404, "Projeto não encontrado.");
   for (const alias of project?.aliases ?? []) keys.push(aliasKey(alias));
   await deleteKeys(bucket, keys);
+  const slugs = await projectSlugs(bucket);
+  if (slugs.includes(slug)) await writeIndex(bucket, slugs.filter((item) => item !== slug));
   return { ok: true };
 }
 
@@ -786,6 +793,35 @@ async function deleteKeys(bucket: R2Bucket, keys: string[]): Promise<void> {
   }
 }
 
+/**
+ * Lista de endereços dos projetos. Evita varrer todas as chaves (o que o KV não faz bem). Se o
+ * índice não existir, como num armazenamento criado por uma versão anterior, reconstrói pelos
+ * prefixos e grava.
+ */
+async function projectSlugs(bucket: R2Bucket): Promise<string[]> {
+  const object = await bucket.get(INDEX_KEY);
+  if (object) {
+    try {
+      const list = await object.json<unknown>();
+      if (Array.isArray(list)) return list.filter((item): item is string => typeof item === "string");
+    } catch {
+      // índice ilegível: reconstrói abaixo
+    }
+  }
+  const result = await bucket.list({ prefix: PREFIX, delimiter: "/", limit: 1000 });
+  const slugs = result.delimitedPrefixes
+    .map((prefix) => prefix.slice(PREFIX.length).replace(/\/$/, ""))
+    .filter(Boolean);
+  if (slugs.length) await writeIndex(bucket, slugs);
+  return slugs;
+}
+
+async function writeIndex(bucket: R2Bucket, slugs: string[]): Promise<void> {
+  await bucket.put(INDEX_KEY, JSON.stringify(slugs), {
+    httpMetadata: { contentType: "application/json; charset=utf-8" }
+  });
+}
+
 async function readProject(bucket: R2Bucket, slug: string): Promise<ProjectRecord | null> {
   const object = await bucket.get(PREFIX + slug + "/project.json");
   if (!object) return null;
@@ -853,7 +889,7 @@ function publicProject(project: ProjectRecord, active: VersionSummary | null): R
   return {
     slug: project.slug, name: project.name, url: "/" + project.slug + "/",
     activeVersion: project.activeVersion, entry: project.entry,
-    publishedAt: current?.publishedAt ?? null,
+    publishedAt: project.activatedAt ?? current?.publishedAt ?? null,
     fileCount: current?.fileCount ?? 0, totalBytes: current?.totalBytes ?? 0,
     pinned: project.pinned ?? [], aliases: project.aliases ?? [],
     settings: normalizeSettings(project.settings), versions: project.versions
